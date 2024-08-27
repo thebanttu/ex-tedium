@@ -1,4 +1,4 @@
-#!/usr/pkg/bin/python3
+#!/usr/bin/python3
 
 # IMPORTANT: change the dir path to where your
 # cloned dir is located.
