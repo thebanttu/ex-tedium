@@ -19,7 +19,7 @@ Highlights:
 - and miscellanea to do all sorts of things from starting vms using qemu to searching and playing media quickly
 
 
-You may need to change priv_init.py to fit your env
+You may need to change bin/priv_init.py to fit your env
 
 Most of the stuff in lib bootstraps itself
 
