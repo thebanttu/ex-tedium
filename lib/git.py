@@ -37,12 +37,10 @@ class bantu_git_repo(Repo):
             return cls(d)
         else:
             d = os.path.expanduser(d)
-            print(f"Repo dir -> {d}")
             if 'url' in kwargs:
                 if (not os.path.isdir(d) or bu.is_dir_empty(d)):
                     repo = cls.clone_repo(kwargs["url"], d)
                 else:
-                    print(f"Performing git init on {d}")
                     repo = cls.init_repo(d, url=kwargs["url"])
             else:
                 repo = cls.init_repo(d)
@@ -52,16 +50,22 @@ class bantu_git_repo(Repo):
     def init_repo(cls, d, **kwargs):
         repo = super().init(d)
         if 'url' in kwargs:
+            print(f"Repo url passed -> {kwargs['url']}")
             origin = repo.create_remote("origin", kwargs["url"])
             try:
                 origin.fetch()
+                print(f"Successfully completed fetch from repo {kwargs['url']}")
             except GitCommandError:
                 print(f"{marangi.FAIL}"
                       f"Problem performing initial fetch from the remote ({kwargs['url']}), please verify access to your repo."
                       f"{marangi.ENDC}")
                 sys.exit(11)
-            # Create local branch "main" from remote "main".
-            repo.create_head("main", origin.refs.main)
+            if "main" in origin.refs:
+                # Create local branch "main" from remote "main".
+                repo.create_head("main", origin.refs.main)
+            else:
+                main = repo.create_head("main")
+                repo.heads.main.checkout()
             # Set local "main" to track remote "main.
             repo.heads.main.set_tracking_branch(origin.refs.main)
             repo.heads.main.checkout()
@@ -191,7 +195,7 @@ class bantu_git_repo(Repo):
         return latest_local_commit != latest_remote_commit
 
     def update_repo(self, msg=None, **kwargs):
-        if self.is_dirty():
+        if self.is_dirty() or self.untracked_files:
             print(f"Updating repo at -> {self.working_tree_dir}")
             self.stage_untracked_files()
             self.stage_modified_files()

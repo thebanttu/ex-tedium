@@ -66,7 +66,7 @@ class bantu_utils:
     def is_dir_empty(d):
         d = os.path.expanduser(d)
         if os.path.isdir(d):
-            return  bool(os.listdir(d))
+            return not bool(os.listdir(d))
         return False
 
     @staticmethod
