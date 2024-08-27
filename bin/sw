@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+# On NetBSD, when you need to see a list of
+# access points your Wireless card can "see".
+# doas over sudo of course.
+
+NIC=rtwn0
+doas ifconfig ${NIC} list scan

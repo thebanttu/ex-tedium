@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+# Convert mkv (from later codecs eg opus or h265) to mkv (safe h264 codec)
+
+for i in "${@}"; do
+    echo Converting file: ${i}...
+    d=$(dirname ${i}).mkv
+    f=$(basename ${i})
+    [[ -d ${d} ]] || mkdir -p ${d}
+    #  ffmpeg -i "$i" -codec copy "${d}/${f%.*}.mp4"
+    ffmpeg -i "$i" -c:v h264 -c:a aac "${d}/${f}"
+done

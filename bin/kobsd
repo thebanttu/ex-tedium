@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+PORT=4321
+pkill -f 'qemu.*obsd'
+pkill -f 'ssh.*'${PORT}

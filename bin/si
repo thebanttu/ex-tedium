@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+
+case "${1}" in
+    s|synopsis|syn)
+	action=${1}
+	shift
+	imdb synopsis "${@}"
+	;;
+    i|info|in)
+	action=${1}
+	shift
+	imdb info "${@}"
+	;;
+    s|search|s)
+	verb=${2}
+	shift 2
+	imdb search ${verb} "${@}"
+	;;
+    p|person|people|person|guy)
+	verb=${1}
+	shift
+	imdb person "${@}"
+	;;
+    d|dir|director)
+	verb=${1}
+	shift
+	imdb director "${@}"
+	;;
+esac

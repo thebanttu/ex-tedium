@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+FEHBG_SCRIPT=${HOME}/.fehbg
+SEARCH_DIRS="${HOME}/Pictures/wallpapers"
+WALLPAPER=
+while [ -z "${WALLPAPER}" ]; do
+    WALLPAPER=$(find ${SEARCH_DIRS[*]} -type f | shuf - | head -1)
+    grep -iq image <<< $(file "${WALLPAPER}")
+    [ $? -ne 0 ] && WALLPAPER=
+done
+feh --no-fehbg --bg-fill "${WALLPAPER}"
+sed -i 's@^\(WALLPAPER=\).*@\1'\'"${WALLPAPER}"\''@' ${FEHBG_SCRIPT}

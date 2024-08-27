@@ -1,0 +1,8 @@
+#!/usr/bin/env python3
+
+import priv_init
+from bantu.pdf import bantu_pdf as pdf
+import sys
+
+r = pdf(sys.argv[1])
+r.get_text()

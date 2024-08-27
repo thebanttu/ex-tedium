@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+
+PORT=4321
+pkill -f 'qemu.*omnios'
+pkill -f 'ssh.*'${PORT}

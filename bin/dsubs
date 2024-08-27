@@ -1,0 +1,98 @@
+#!/usr/bin/env python3
+
+import priv_init
+import bantu.utils
+from bantu.utils import bantu_utils as bu
+if not bu.is_installed("subliminal"):
+    bu.install("subliminal")
+from subliminal import download_best_subtitles, region, save_subtitles, scan_video
+from babelfish import Language
+import subprocess as sp
+import pprint as p
+import mimetypes
+import signal
+import socket
+import json
+import pprint
+import sys
+import os
+import os.path as osp
+
+VIDEO_EXTS = ['mkv', 'mp4']
+cache_file = osp.expanduser('~/.local/state/subliminal/cachefile.dbm')
+# configure the cache for subliminal
+if not osp.exists(osp.dirname(cache_file)):
+    os.makedirs(osp.dirname(cache_file))
+region.configure('dogpile.cache.dbm', arguments={'filename': cache_file})
+
+if len(sys.argv) == 1:
+    root = '.'
+else:
+    # TODO: Deal with the rest of the arguments incase the user passes
+    # more than one path.
+    root = sys.argv[1]
+
+def subtitle_embedded(v):
+    """Check if a video has embedded subtitles"""
+    out = sp.run(['ffprobe','-of','json','-show_entries', 'format:stream', v],\
+                 stdout=sp.PIPE, stderr=sp.PIPE, universal_newlines=True)
+    results = json.loads(out.stdout)
+    if 'streams' in results.keys():
+        metadata_codec_types = [res['codec_type'] for res in results['streams']]
+        if 'subtitle' in metadata_codec_types:
+            return True
+    return False
+
+def guess_subfile(d, r):
+    return [
+        os.path.join(d, r + '.srt'),
+        os.path.join(d, r + '.en.srt'),
+    ]
+
+def subtitle_present(f):
+    """Check if there's a subtitle file present for passed video"""
+    dir = os.path.dirname(f)
+    fr = os.path.splitext(
+        os.path.basename(f))[0]
+    for sf in guess_subfile(dir, fr):
+        if os.path.exists(sf):
+            #print(f"Subtitle file found for {f}")
+            return True
+    return False
+
+def is_video(f):
+    fn = os.path.basename(f)
+    ext = fn.split('.')[-1].lower()
+    return ext in VIDEO_EXTS
+    #return mimetypes.guess_type(f)[0].startswith('video')
+
+def is_subtitle_file(f):
+    return os.path.splitext(f)[1] in ['.srt', 'en.srt']
+
+def check_subtitles(f):
+    return subtitle_embedded(f) or subtitle_present(f)
+
+def get_subtitle(f):
+    bu.internet()
+    video = scan_video(f)
+    subtitles = download_best_subtitles([video], {Language('eng')}, providers=['addic7ed','gestdown', 'napiprojekt', 'opensubtitles', 'podnapisi', 'tvsubtitles'])
+    save_subtitles(video, subtitles[video])
+
+def process_dir(d):
+    for parent, dirs, files in os.walk(d):
+        for file in files:
+            if os.path.isdir(file):
+                process_dir(file)
+            f = os.path.join(parent, file)
+            if is_video(f):
+                if check_subtitles(f):
+                    print(f"Subtitles found for {f}")
+                else:
+                    print(f"No subtitles found for {f}. Proceeding to fetch...")
+                    get_subtitle(f)
+            else:
+                pass
+                #print(f"File: {f} is NOT a video.")
+
+if __name__ == "__main__":
+    process_dir(root)

@@ -1,0 +1,7 @@
+#!/usr/bin/env perl
+
+use File::Path;
+die "usage: $0 dir ..\n" unless @ARGV;
+foreach $dir (@ARGV) {
+    rmtree($dir, 1, 1);
+}

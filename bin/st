@@ -1,0 +1,202 @@
+#!/usr/bin/env python3
+
+import priv_init
+import bantu.utils
+from bantu.utils import bantu_utils as bu
+if not bu.is_installed("mechanize"):
+    bu.install("mechanize")
+import mechanize
+if not bu.is_installed("bs4"):
+    bu.install("beautifulsoup4")
+from bs4 import BeautifulSoup
+if not bu.is_installed("clipboard"):
+    bu.install("clipboard")
+import clipboard
+import re
+import sys
+import signal
+import socket
+import argparse
+import mechanize
+import urllib.parse
+
+WEBSITE="https://1337x.to/"
+
+def load_arguments():
+    parser = argparse.ArgumentParser(
+            description="Search for torrents")
+    parser.add_argument(
+            'search_term', nargs='+',
+            help='The thing you want to search for')
+    args = parser.parse_args()
+    #print(args.search_term); sys.exit()
+    return ' '.join(args.search_term)
+
+def encode_search_term(term):
+    return urllib.parse.quote_plus(term)
+
+def make_search_url(search_term):
+    final_url = WEBSITE \
+        + "search/" \
+        + encode_search_term(search_term) \
+        + "/1/"
+    return final_url
+
+def perform_search(url):
+    br = mechanize.Browser()
+    br.set_handle_robots(False)
+    br.addheaders = [
+        ('User-agent',
+         'Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9.0.1) Gecko/2008071615 Fedora/3.0.1-1.fc9 Firefox/3.0.1')]
+    r = br.open(url)
+    s = parse_html(r.read())
+    check_search_results(s)
+    return s
+
+def check_search_results(s):
+    title = s.find('title')
+    if re.match(r'^Error something went.*', title.string):
+        print("Search failed, no results found. Please try another search term.")
+        sys.exit(12)
+    return True
+
+def parse_html(html):
+    soup = BeautifulSoup(html, 'html.parser')
+    return soup
+
+def prettify(s):
+    return s.prettify()
+
+def results_table(s):
+    return s.find('table')
+
+def results_heading(s):
+    headers = []
+    r = re.compile(r'^(?:name|se|time|size)$')
+    for header in s.find('thead').find_all('th'):
+        if header.find('span'):
+            h = header.span.string
+        else:
+            h = header.string
+        if r.match(h):
+            headers.append(h)
+        else:
+            next
+    return "    {0:<68}{1:<6}{2:<17}{3:<8}".format(*[x.capitalize() for x in headers])
+
+def results_rows(s):
+    results = []
+    for r in s.find('tbody').find_all('tr'):
+        rr = []
+        for d in r.find_all('td'):
+            dd = []
+            found = 0
+            if 'name' in d['class']:
+                el = d.a.next_sibling
+                dd.append(el.string)
+                dd.append(el['href'])
+                found = 1
+            elif 'seeds' in d['class']:
+                dd.append(d.string)
+                found = 1
+            elif 'coll-date' in d['class']:
+                dd.append(d.string)
+                found = 1
+            elif 'size' in d['class']:
+                for s in d.strings:
+                    dd.append(s)
+                    break
+                found = 1
+            if found == 1:
+                rr.append(dd)
+        results.append(rr)
+    # for i in results:
+    #     print("{0[0]:<72}{1[0]:<6}{2[0]:<17}{3[0]:<8}".format(*i))
+    return results
+
+def display_rows(r):
+    for i in range(len(r)):
+        row = [str(i+1)+"."] + r[i]
+        name = row[1][0]
+        if len(name) > 64:
+            name = name[:64]
+            row[1][0] = name + "..."
+            del(name)
+        print("{0:<4}{1[0]:<68}{2[0]:<6}{3[0]:<17}{4[0]:<8}".format(*row))
+
+def display_heading(h):
+    print(h)
+
+def display_results(h, r):
+    display_heading(h)
+    display_rows(r)
+
+def get_user_choice(max=20):
+    while True:
+        try:
+            choice = input("\rSelect Torrent >>> ")
+            if re.match(r'^[qQ]$', choice):
+                print("Bye!")
+                sys.exit(0)
+            if not re.match(r'\d+', choice):
+                raise ValueError
+            if not (int(choice) > 0 and int(choice) < (max + 1)):
+                raise RuntimeError
+            # print(f"You entered -> {choice}\n")
+        except ValueError:
+            print("Provided input is not a proper number, try again.")
+            continue
+        except RuntimeError:
+            print(f"Invalid input, enter a number between 1 and {max}.")
+            continue
+        except EOFError:
+            sys.exit(12)
+        else:
+            break
+    return int(choice)
+
+def display_user_choice(c, r):
+    i = c - 1
+    print(f'URL -> {WEBSITE.rstrip("/")}{r[i][0][1]}')
+
+def get_magnet_link(c, r):
+    br = mechanize.Browser()
+    br.set_handle_robots(False)
+    br.addheaders = [('User-agent', 'Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9.0.1) Gecko/2008071615 Fedora/3.0.1-1.fc9 Firefox/3.0.1')]
+    url = r[(c-1)][0][1]
+    url = WEBSITE.rstrip("/") + url
+    r = br.open(url)
+    s = parse_html(r.read())
+    # search for magnet link in div with classes -> col-9 page-content"
+    magnet_link = None
+    for div in s.main.find_all('div'):
+        if 'col-9' in div['class'] and 'page-content' in div['class']:
+            for l in div.find_all('a'):
+                if re.match(r'^magnet.*', l['href']):
+                    for lt in l.strings:
+                        magnet_link = l['href']
+                        break
+                    break
+                break
+            break
+    if magnet_link:
+        return magnet_link
+
+def display_magnet_link(m):
+    print(f"\n\n{m}")
+
+def send_magnet_link_to_clipboard(m):
+    clipboard.copy(m)
+    print("Magnet link copied to clipboard...")
+
+if __name__ == '__main__':
+    search_term = load_arguments()
+    bu.internet()
+    sr = perform_search(make_search_url(search_term))
+    heading = results_heading(results_table(sr))
+    rows = results_rows(results_table(sr))
+    display_results(heading, rows)
+    choice = get_user_choice()
+    m = get_magnet_link(choice, rows)
+    send_magnet_link_to_clipboard(m)
+    display_magnet_link(m)

@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+
+WM=evilwm
+/usr/bin/pkill -9 ${WM}

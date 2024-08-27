@@ -1,0 +1,14 @@
+#!/usr/bin/env python3
+"""
+Bantu Web browswer dispatcher
+"""
+
+import priv_init
+import sys, os
+from bantu.web import bantu_web as bw
+
+if len(sys.argv) > 1:
+    if sys.argv[1] == 'google':
+        bw.search_google(' '.join(sys.argv[2:]))
+else:
+    bw.open_google()

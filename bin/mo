@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+present=0
+mount_result=0
+for l in b c d e f
+do
+    present=$(ls /dev/sd${l}1 >&/dev/null; echo $?)
+    [ $present -ne 0 ] && continue
+    sudo mount /dev/sd${l}1 /mnt/usb
+    mount_result=$?
+    break
+done
+
+[[ $present -ne 0 ]] && \
+    echo Could NOT find an attached drive. Please check. >&2

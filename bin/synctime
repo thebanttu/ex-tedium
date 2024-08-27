@@ -1,0 +1,45 @@
+#!/usr/bin/python3
+"""
+Sync time using NTP
+"""
+
+import priv_init
+import sys, os
+import socket
+import struct, time
+from socket import AF_INET, SOCK_DGRAM
+from bantu.utils import bantu_utils as bu
+
+def getNTPTime(host = "ke.pool.ntp.org"):
+    """
+    Fetch time from ntp server
+    Credits: https://www.mattcrampton.com/blog/query_an_ntp_server_from_python/S
+    """
+    bu.internet()
+    port = 123
+    buf = 1024
+    address = (host,port)
+    msg = '\x1b' + 47 * '\0'
+    TIME1970 = 2208988800 # 1970-01-01 00:00:00
+    client = socket.socket( AF_INET, SOCK_DGRAM)
+    client.sendto(msg.encode('utf-8'), address)
+    msg, address = client.recvfrom( buf )
+    t = struct.unpack( "!12I", msg )[10]
+    t -= TIME1970
+    return (t, time.ctime(t).replace("  "," "))
+
+def setNTPTime():
+    t, tt = getNTPTime()
+    print(f"Attempting to set time to {tt}")
+    bu.amiroot()
+    time.clock_settime(time.CLOCK_REALTIME, t)
+
+def display_time():
+    _, tt = getNTPTime()
+    print(f"Time from NTP Server is: {tt}")
+
+if __name__ == "__main__":
+    if len(sys.argv) > 1:
+        display_time()
+    else:
+        setNTPTime()
