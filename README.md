@@ -22,6 +22,7 @@ You may need to change bin/priv_init.py to fit your env
 
 Most of the stuff in lib bootstraps itself
 
-Warning: I laugh in the face of best practices and just try to get the annoyances
-I experience in my daily computering addressed, you won't find the use of virtual
+Warning: There is minimal strict adherance to best practices and I
+instead just try to get the annoyances I experience in my daily
+computering addressed, for example you won't find the use of virtual
 envrinments here.
