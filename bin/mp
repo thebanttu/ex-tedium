@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
 set -eo pipefail
-PLAYER="mpv"
 PLAYER="mpg123 -f -2500"
+PLAYER="mpv"
 SHUFFLE= LISTONLY=
 # Collect options
 while getopts "sl" option
@@ -26,7 +26,7 @@ if [ -n "${RE_PREDICATES}" ]; then
     RE_PREDICATES=$(echo "${RE_PREDICATES}" | sed 's/....//' | sed 's/.*/\\( & \\)/')
 fi
 FIND_CMD="find ${HOME}/Music -depth -type f ${RE_PREDICATES}"
-FIND_CMD="${FIND_CMD} \( -name '*mp3' -o -name '*flac' -o -name '*wav' -o -name '*m3u' \)"
+FIND_CMD="${FIND_CMD} \( -name '*mp3' -o -name '*flac' -o -name '*wav' -o -name '*m3u' -o -name '*m4a' \)"
 SORT_FILTER="sort"
 SHUFFLE_FILTER="shuf -"
 # Mimic find's -print0 with tr
@@ -49,7 +49,7 @@ else
 fi
 
 # mpg123
-eval "${CMD}"
+# eval "${CMD}"
 
 # mpv
-# eval "${CMD} 2>/dev/null &"
+eval "${CMD} 2>/dev/null &"
