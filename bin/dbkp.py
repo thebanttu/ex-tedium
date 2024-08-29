@@ -52,27 +52,9 @@ sources_and_destinations = {
     backup_target + 'MUSIC/',
     # Movies
     'movies': {
-        'files': [
-            home + '/Videos/Movies/Lone Star (1996) [WEBRip] [720p] [YTS.LT]',
-            home + '/Videos/Movies/Leon The Professional Extended (1994)',
-            home + '/Videos/Movies/Clear and Present Danger (1994)',
-            home + '/Videos/Movies/Body Heat (1981) [YTS.AG]',
-            home + '/Videos/Movies/The Ref (1994) [720p] [WEBRip] [YTS.MX]',
-        ],
+        'source': home + '/Videos/Movies/',
         'target': backup_target + 'MOVIES/Goodies/',
     },
-    # TV
-    home + '/Videos/TV/House.Of.The.Dragon': \
-    backup_target + 'SHAD/TVSHOWS/',
-    # Research
-    home + '/Videos/Research/': \
-    backup_target + 'SHAD/Research/',
-    # Documentaries
-    home + '/Videos/Documentaries/': \
-    backup_target + 'SHAD/Documentaries/',
-    # Tech
-    home + '/Videos/Tech/': \
-    backup_target + 'SHAD/Tech/',
     # Clips
     home + '/Videos/clips/': \
     backup_target + 'SHAD/Clips/',

@@ -9,7 +9,7 @@ from os import access, R_OK, X_OK
 from os.path import isfile
 from pprint import pprint as pp
 
-home = os.environ['HOME']
+home = os.environ.get('HOME')
 backup_target = home + '/Projects/backup/env/'
 python_version = "" + \
     f"{sys.version_info.major}." + \
@@ -17,7 +17,6 @@ python_version = "" + \
 default_excludes = [
     home + '/.excludes/junk.txt',
 ]
-repo_url = "git@github.com:thebanttu/bantu-env.git"
 repos = {
     "env": "git@github.com:thebanttu/bantu-env.git",
     "notes": "git@gitlab.com:thebanttu/my-org.git",
@@ -34,6 +33,8 @@ and a dict as a value.
 For a predetermined list of files, create a files key with a list
 value containing the files.  For extra exclude file(s) create an
 exclude key with a list value of the exclude files.
+
+The files key and the source key are mutually exclusive.
 """
 sources_and_destinations = {
     # shell utils
@@ -52,7 +53,6 @@ sources_and_destinations = {
     },
     # my dotfiles
     'dotfiles': {
-        'source': home + '/',
         'files': [
             home + '/.gitconfig',
             home + '/.rgignore',
@@ -75,31 +75,12 @@ sources_and_destinations = {
     # exclude lists (for use with rsync mostly)
     home + '/.excludes/': \
     backup_target + 'exclude',
-    # netbsd configs
-    # 'netbsdconfigs': {
-    #     'files': [
-    #         '/etc/amd.conf',
-    #         '/etc/amd',
-    #         '/etc/rc.conf',
-    #         '/etc/mixerctl.conf',
-    #         '/etc/mk.conf',
-    #     ],
-    #     'target': backup_target + 'config/netbsd/etc/',
-    # },
-    # global pkg configs
-    # 'pkgconfigs': {
-    #     'files': [
-    #         '/usr/pkg/etc/doas.conf',
-    #     ],
-    #     'target': backup_target + 'config/pkg/',
-    # },
     # ex-tedium bins
     'ex_tedium#' + home + '/bin/': \
     home + '/Projects/code/python/ex-tedium/bin',
     # ex-tedium libs
     'ex_tedium#' + home + '/Projects/code/python/private/bantu/': \
     home + '/Projects/code/python/ex-tedium/lib',
-
 }
 
 def create_backup_destination_tree():
