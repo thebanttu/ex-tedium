@@ -12,7 +12,7 @@ def sync_downloaded_media(s=None):
     excludes = [
         home + '/.excludes/media.exclude.txt',
     ]
-    source_host = 'zeus'
+    source_host = 'poseidon'
     prefix = source_host + ':.downloads/'
     destination = home + '/Downloads/Basket/'
     if len(s) == 0:
