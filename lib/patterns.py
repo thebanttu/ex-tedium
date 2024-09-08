@@ -22,6 +22,7 @@ class bantu_patterns:
         (?:[._ ](?P<format>480p|576p|720p|1080p|1080i|2160p))?
         (?:[._ ](?P<srctag>[a-z]{1,9}))?
         (?:[._ ](?P<source>BDRip|BRRip|HDRip|DVDRip|DVD[59]?|PAL|NTSC|Web|WebRip|WEB-DL|Blu-ray|BluRay|BD25|BD50))?
+        (?:[._ ](?P<size>\d{1,4}\w{2}))?
         (?:[._ ](?P<sound1>MP3|DD.?[25]\.[01]|AC3|AAC(?:2.0)?|FLAC(?:2.0)?|DTS(?:-HD)?))?
         (?:[._ ](?P<codec>xvid|divx|avc|x264|h\.?264|hevc|h\.?265))
         (?:[._ ](?P<sound2>MP3|DD.?[25]\.[01]|AC3|AAC(?:2.0)?|FLAC(?:2.0)?|DTS(?:-HD)?))?

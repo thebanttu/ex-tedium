@@ -23,7 +23,7 @@ class bantu_media:
                     f = osp.join(parent, file).replace(d+'/', '') \
                         .split('/')[0]
                     items.add(f)
-        print(f"Target candidate set -> {items}")
+        print(f"Movie target candidate set -> {items}")
         return items
 
     @staticmethod
@@ -38,7 +38,7 @@ class bantu_media:
                     f = osp.join(parent, file).replace(d+'/', '') \
                         .split('/')[0]
                     items.add(f)
-        print(f"Target candidate set -> {items}")
+        print(f"TV target candidate set -> {items}")
         return items
 
     @staticmethod
