@@ -44,13 +44,13 @@ class bantu_media:
     @staticmethod
     def move_items_from_the_basket():
         m = __class__.check_movies(basket)
-        dst = osp.expanduser("~bantu/Videos/Movies")
+        dst = osp.expanduser("~/Videos/Movies")
         if len(m) > 0:
             for item in m:
                 src = osp.join(basket, item)
                 move(src, dst)
         t = __class__.check_tv(basket)
-        dst = osp.expanduser("~bantu/Videos/TV")
+        dst = osp.expanduser("~/Videos/TV")
         if len(t) > 0:
             for item in t:
                 src = osp.join(basket, item)
