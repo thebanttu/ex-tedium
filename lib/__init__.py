@@ -1,1 +1,1 @@
-__all__ = ['git', 'imdb', 'utils', 'web', 'youtube']
+__all__ = ['git', 'imdb', 'media', 'patterns', 'utils', 'web', 'youtube']

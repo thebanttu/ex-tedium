@@ -75,7 +75,16 @@ def check_subtitles(f):
 def get_subtitle(f):
     bu.internet()
     video = scan_video(f)
-    subtitles = download_best_subtitles([video], {Language('eng')}, providers=['addic7ed','gestdown', 'napiprojekt', 'opensubtitles', 'podnapisi', 'tvsubtitles'])
+    subtitles = download_best_subtitles(
+        [video],
+        {Language('eng')},
+        providers=[
+            'addic7ed',
+            'gestdown',
+            'napiprojekt',
+            'opensubtitles',
+            'podnapisi',
+            'tvsubtitles'])
     save_subtitles(video, subtitles[video])
 
 def process_dir(d):

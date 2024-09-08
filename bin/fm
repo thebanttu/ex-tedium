@@ -3,26 +3,12 @@
 import priv_init
 import bantu.utils
 import os, re, subprocess, sys, time
-from bantu.utils import bantu_utils as bu
-from pprint import pprint as pp
+from bantu.media import bantu_media as bm
 
-home = os.environ['HOME']
-
-def sync_downloaded_media(s=None):
-    excludes = [
-        home + '/.excludes/media.exclude.txt',
-    ]
-    source_host = 'poseidon'
-    prefix = source_host + ':.downloads/'
-    destination = home + '/Downloads/Basket/'
-    if len(s) == 0:
-        source = prefix
-    else:
-        source = [ prefix + item + "*" for item in s ]
-    c = bu.fetch(source, destination, ex=excludes)
-    return c
+media_host = 'poseidon'
 
 if __name__ == "__main__":
     if sys.argv[0].endswith("fm"):
         search = sys.argv[1:]
-        sync_downloaded_media(search)
+        bm.sync_downloaded_media(search, media_host)
+        bm.move_items_from_the_basket()
