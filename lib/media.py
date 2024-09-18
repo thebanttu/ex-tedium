@@ -35,8 +35,8 @@ class bantu_media:
                     items += check_tv(file)
                 if bp.ptrn.get("tv_pattern").match(file):
                     #print(f"{file} is a tv show episode or closely related")
-                    f = osp.join(parent, file).replace(d+'/', '') \
-                        .split('/')[0]
+                    f = osp.join(parent, file).replace(d + osp.sep, '') \
+                        .split(osp.sep)[0]
                     items.add(f)
         print(f"TV target candidate set -> {items}")
         return items
