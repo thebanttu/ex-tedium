@@ -12,6 +12,11 @@ basket = osp.expanduser('~/Downloads/Basket')
 
 class bantu_media:
     @staticmethod
+    def ensure_basket_exists():
+        if not osp.exists(basket):
+            os.mkdir(basket)
+
+    @staticmethod
     def check_movies(d):
         items = set()
         for parent, dirs, files in os.walk(d):
