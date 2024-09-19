@@ -8,6 +8,7 @@ from bantu.media import bantu_media as bm
 media_host = 'poseidon'
 
 if __name__ == "__main__":
+    bm.ensure_basket_exists()
     if sys.argv[0].endswith("fm"):
         search = sys.argv[1:]
         bm.sync_downloaded_media(search, media_host)
