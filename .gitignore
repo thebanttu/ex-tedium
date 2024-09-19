@@ -1,1 +1,3 @@
 ytcast
+__pycache__
+*.sw?
