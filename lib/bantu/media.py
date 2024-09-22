@@ -73,6 +73,6 @@ class bantu_media:
         if len(s) == 0:
             source = prefix
         else:
-            source = [ prefix + item + "*" for item in s ]
+            source = [ prefix + "*" + item + "*" for item in s ]
         c = bu.fetch(source, destination, ex=excludes)
         return c

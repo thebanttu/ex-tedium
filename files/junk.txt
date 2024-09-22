@@ -1,0 +1,9 @@
+.git
+.gitignore
+*.sw?
+*~
+\#*#
+.#*
+__pycache__
+OI-hipster*
+ytcast

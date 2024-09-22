@@ -1,8 +1,17 @@
 #!/usr/bin/env python3
 
 import priv_init
-import os
+import os, sys
 import os.path as osp
-from bantu.media import bantu_media as bm
+#from bantu.media import bantu_media as bm
+from bantu.utils import bantu_utils as bu
 
-bm.move_items_from_the_basket()
+
+# bm.move_items_from_the_basket()
+if __name__ == "__main__":
+    f = sys.argv[1:]
+    h = 'poseidon'
+    if bu.does_file_exist_remotely(f, h):
+        print("File(s) found")
+    else:
+        print("File(s) not found")

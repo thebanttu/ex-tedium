@@ -269,4 +269,32 @@ class bantu_utils:
             return wrapper
         return decorator
 
+    @staticmethod
+    def ensure_excludes_dir_is_present():
+        d = os.path.expanduser('~/.excludes')
+        if not os.path.exists(d):
+            os.mkdir(d)
+
+    @staticmethod
+    def does_file_exist_remotely(p, h='zeus'):
+        if len(p) == 0:
+            return False
+        prefix = '.downloads/'
+        cmd = [
+            'ssh',
+            h,
+            '--',
+            'shopt',
+            '-s',
+            'nocaseglob;',
+            'ls',
+            '-d',
+        ]
+        p = [ prefix + "*" + item + "*" for item in p ]
+        cmd += p
+        r = subprocess.run(cmd, capture_output=False,
+                           universal_newlines=True,
+                           check=False)
+        return r.returncode == 0
+
 signal.signal(signal.SIGINT, bantu_utils.handle_ctrl_c)

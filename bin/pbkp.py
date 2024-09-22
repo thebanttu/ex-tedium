@@ -81,6 +81,9 @@ sources_and_destinations = {
     # ex-tedium libs
     'ex_tedium#' + home + '/Projects/code/python/private/bantu/': \
     home + '/Projects/code/python/ex-tedium/lib/bantu',
+    # ex-tedium files (excludes)
+    'ex_tedium#' + home + '/.excludes/': \
+    home + '/Projects/code/python/ex-tedium/files',
 }
 
 def create_backup_destination_tree():
