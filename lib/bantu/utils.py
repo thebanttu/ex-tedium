@@ -279,22 +279,30 @@ class bantu_utils:
     def does_file_exist_remotely(p, h='zeus'):
         if len(p) == 0:
             return False
-        prefix = '.downloads/'
-        cmd = [
-            'ssh',
-            h,
-            '--',
-            'shopt',
-            '-s',
-            'nocaseglob;',
-            'ls',
-            '-d',
+        prefixes = [
+            '.downloads/'
         ]
-        p = [ prefix + "*" + item + "*" for item in p ]
-        cmd += p
-        r = subprocess.run(cmd, capture_output=False,
-                           universal_newlines=True,
-                           check=False)
-        return r.returncode == 0
+        for prefix in prefixes:
+            cmd = [
+                'ssh',
+                h,
+                '--',
+                'shopt',
+                '-s',
+                'nocaseglob;',
+                'ls',
+                '-d',
+            ]
+            p = [ prefix + "*" + item + "*" for item in p ]
+            cmd += p
+            r = subprocess.run(cmd, capture_output=False,
+                               universal_newlines=True,
+                               check=False)
+            returns.append(r)
+            final_return = False
+            for rr in returns:
+                final_return = r.returncode == 0
+            return final_return
+
 
 signal.signal(signal.SIGINT, bantu_utils.handle_ctrl_c)
