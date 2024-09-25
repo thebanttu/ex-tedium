@@ -299,10 +299,13 @@ class bantu_utils:
                                universal_newlines=True,
                                check=False)
             returns.append(r)
-            final_return = False
-            for rr in returns:
+        final_return = False
+        for rr in returns:
+            if final_return:
                 final_return = r.returncode == 0
-            return final_return
+            else:
+                return False
+        return final_return
 
 
 signal.signal(signal.SIGINT, bantu_utils.handle_ctrl_c)
