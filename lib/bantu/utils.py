@@ -46,7 +46,7 @@ class bantu_utils:
             "-m",
             "pip",
             "install",
-            "--break-system-packages",
+            #"--break-system-packages",
             "--user",
             "--upgrade",
             p,

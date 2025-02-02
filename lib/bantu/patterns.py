@@ -6,12 +6,12 @@ class bantu_patterns:
     ptrn = {
         "tv_pattern": re.compile(r"""
         ^
-        (?P<show>[a-zA-Z1-9\.\-]+[^\.])
+        (?P<show>[a-zA-Z1-9.-]+[^\.])
         \.[Ss]?(?P<season>\d{1,2})[EeXx](?P<episode>\d{1,2})
-        (\.(?P<title>[a-zA-Z1-9\.]+[^\.]))?
-        \.(?P<resolution>\d{3,4}p)
-        \.(?P<quality>[a-zA-Z\-]{1,6})
-        \.(?P<codec>[a-zA-Z0-9\.]+\d)
+        (?:\.(?P<title>[a-zA-Z1-9\.]+[^\.]))?
+        \.(?P<resolution>\d{3,4}p)?
+        \.(?P<quality>[a-zA-Z\-]{1,6})?
+        \.(?P<codec>[a-zA-Z0-9\.]+\d)?
         ([\.\-](?P<team>.+))?
         $
         """, re.X),

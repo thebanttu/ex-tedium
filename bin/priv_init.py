@@ -4,5 +4,5 @@
 # cloned dir is located.
 import os, sys
 # user = os.environ.get("USER")
-dir = os.path.expanduser('~bantu/Projects/code/python/private')
+dir = os.path.expanduser('~bantu/ex-tedium/lib')
 sys.path.insert(0, dir)

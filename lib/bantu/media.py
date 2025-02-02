@@ -4,17 +4,20 @@ import bantu.utils
 import os, re, subprocess, sys, time
 import os.path as osp
 from shutil import move
+from shutil import Error as shutilerr
 from bantu.utils import bantu_utils as bu
 from bantu.patterns import bantu_patterns as bp
 from pprint import pprint as pp
 
 basket = osp.expanduser('~/Downloads/Basket')
+movie_dir = '/mnt/c/Users/ADMIN/Videos/Movies'
+tv_dir = '/mnt/c/Users/ADMIN/Videos/TV'
 
 class bantu_media:
     @staticmethod
     def ensure_basket_exists():
         if not osp.exists(basket):
-            os.mkdir(basket)
+            os.makedirs(basket)
 
     @staticmethod
     def check_movies(d):
@@ -49,13 +52,16 @@ class bantu_media:
     @staticmethod
     def move_items_from_the_basket():
         m = __class__.check_movies(basket)
-        dst = osp.expanduser("~/Videos/Movies")
+        dst = movie_dir
         if len(m) > 0:
             for item in m:
                 src = osp.join(basket, item)
-                move(src, dst)
+                try:
+                    move(src, dst)
+                except shutilerr:
+                    print(f"Source file ({osp.basename(src)}) already exists at destination.")
         t = __class__.check_tv(basket)
-        dst = osp.expanduser("~/Videos/TV")
+        dst = tv_dir
         if len(t) > 0:
             for item in t:
                 src = osp.join(basket, item)
