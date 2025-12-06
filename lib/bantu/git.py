@@ -170,11 +170,18 @@ class bantu_git_repo(Repo):
         f = remote.url
         bu.internet(msg=f"{marangi.FAIL}Aborting push to {f} on account of no active internet connection.{marangi.ENDC}")
         try:
-            remote.push()
-        except GitCommandError:
+            # Check if we need to set upstream (first push)
+            branch = self.active_branch
+            if not branch.tracking_branch():
+                print(f"Setting upstream branch for '{branch.name}' to '{r}/{branch.name}'")
+                remote.push(refspec=f'{branch.name}:{branch.name}', set_upstream=True)
+            else:
+                remote.push()
+        except GitCommandError as e:
             print(f"{marangi.FAIL}"
                   f"Problem pushing changes to the remote ({f}), please verify access to your repo."
                   f"{marangi.ENDC}")
+            print(f"Error details: {e}")
             sys.exit(11)
         print(f"Repo {self.working_tree_dir} successfully pushed to {f}")
         return
@@ -190,9 +197,17 @@ class bantu_git_repo(Repo):
                   f"Problem fetching from the remote ({remote.url}), please verify access to your repo."
                   f"{marangi.ENDC}")
             return False
-        latest_remote_commit = remote.refs[self.active_branch.name].commit
-        latest_local_commit = self.head.commit
-        return latest_local_commit != latest_remote_commit
+
+        # Check if the remote branch exists
+        branch_name = self.active_branch.name
+        try:
+            latest_remote_commit = remote.refs[branch_name].commit
+            latest_local_commit = self.head.commit
+            return latest_local_commit != latest_remote_commit
+        except (IndexError, KeyError):
+            # Remote branch doesn't exist yet, so we need to push
+            print(f"Remote branch '{branch_name}' doesn't exist yet. Will create it on push.")
+            return True
 
     def update_repo(self, msg=None, **kwargs):
         if self.is_dirty() or self.untracked_files:
