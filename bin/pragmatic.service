@@ -1,0 +1,17 @@
+[Unit]
+Description=Pragmatic Service.
+After=crond.service
+
+[Service]
+Type=forking
+User=root
+ExecStart=/scripts/admin/start_pragmatic.sh
+ExecStop=/scripts/admin/stop_pragmatic.sh
+RemainAfterExit=true
+Restart=on-failure
+RestartSec=18s
+LimitNOFILE=100000
+SyslogIdentifier=pragmatic
+
+[Install]
+WantedBy=multi-user.target

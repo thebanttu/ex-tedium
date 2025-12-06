@@ -1,0 +1,66 @@
+#!/bin/bash
+
+# Script to run the RuTracker search tool
+
+# --- Configuration ---
+USERNAME="theselfieabove"
+PASSWORD='tm~}+-WG.4kqiF]'
+PROJECT_DIR="/home/bantu/trt"
+RTORRENT_DIR="$HOME/docker-rtorrent-rutorrent"
+RTORRENT_REPO="https://github.com/crazy-max/rtorrent-rutorrent.git"
+
+# --- Checks ---
+
+# Check if the rtorrent-rutorrent directory exists, clone if not
+if [ ! -d "$RTORRENT_DIR" ]; then
+    echo "Directory $RTORRENT_DIR not found."
+    echo "Cloning from $RTORRENT_REPO..."
+    if ! git clone "$RTORRENT_REPO" "$RTORRENT_DIR"; then
+        echo "Error: Failed to clone the repository."
+        exit 1
+    fi
+fi
+
+# Check if the project directory exists
+if [ ! -d "$PROJECT_DIR" ]; then
+    echo "Error: Project directory not found at $PROJECT_DIR"
+    exit 1
+fi
+
+# --- Docker Check ---
+DOCKER_RUNNING=true
+if ! docker info > /dev/null 2>&1; then
+    DOCKER_RUNNING=false
+    echo "Warning: Docker is not running. The script will start in search-only mode."
+    echo "rTorrent commands (status, pause, start, delete, remote) will be disabled."
+fi
+
+# --- Execution ---
+
+# Navigate to the project directory
+cd "$PROJECT_DIR" || exit
+
+# Activate the virtual environment
+source ".venv/bin/activate"
+
+# Export the password so the Python script can read it
+export RUTRACKER_PASSWORD="$PASSWORD"
+
+# Prepare arguments for the python script
+ARGS=("$USERNAME")
+SEARCH_ONLY_FLAG=""
+
+if ! $DOCKER_RUNNING; then
+    SEARCH_ONLY_FLAG="--search-only"
+fi
+
+if [ "$#" -eq 0 ]; then
+    # No arguments, run with --status
+    python -m trt.main "${ARGS[@]}" --status $SEARCH_ONLY_FLAG
+else
+    # Arguments provided, pass them to the script
+    python -m trt.main "${ARGS[@]}" "$@" $SEARCH_ONLY_FLAG
+fi
+
+# Deactivate the virtual environment when the script is done
+deactivate

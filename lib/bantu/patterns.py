@@ -2,6 +2,8 @@
 
 import re
 
+# The.Penguin.S01E03.WEB.x264-TORRENTGALAXY.mkv
+
 class bantu_patterns:
     ptrn = {
         "tv_pattern": re.compile(r"""

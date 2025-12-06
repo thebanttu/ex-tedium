@@ -1,8 +1,26 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
-# On NetBSD, when you need to see a list of
-# access points your Wireless card can "see".
-# doas over sudo of course.
+# Set the session name
+SESSION_NAME="care-remedy"
+WORK_DIR="$HOME/Projects/care-remedy"
 
-NIC=rtwn0
-doas ifconfig ${NIC} list scan
+cd $WORK_DIR
+
+# Start a new detached tmux session with the first window named "editor"
+tmux new-session -d -s $SESSION_NAME -n editor
+
+# Create the other windows
+tmux new-window -t $SESSION_NAME -n 'cmd'
+tmux new-window -t $SESSION_NAME -n 'claude'
+
+# Start vim in the first window
+tmux send-keys -t $SESSION_NAME:editor 'vim -c "set path+=**"' C-m
+
+# Start claude in the fourth window
+tmux send-keys -t $SESSION_NAME:claude 'claude' C-m
+
+# Select the first window as the default
+tmux select-window -t $SESSION_NAME:3
+
+# Attach to the newly created session
+tmux attach-session -t $SESSION_NAME

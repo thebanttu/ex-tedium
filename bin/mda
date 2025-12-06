@@ -1,0 +1,23 @@
+#!/bin/bash
+
+# Set the session name
+SESSION_NAME="media"
+WORK_DIR="$HOME"
+
+cd $WORK_DIR
+
+# Start a new detached tmux session with the first window named "browser"
+tmux new-session -d -s $SESSION_NAME -n browser
+
+# Create the other windows
+tmux new-window -t $SESSION_NAME -n 'cmd'
+tmux new-window -t $SESSION_NAME -n 'gemini'
+
+# Start vim in the first window
+tmux send-keys -t $SESSION_NAME:browser 'w3m google.com' C-m
+
+# Start gemini in the third window
+tmux send-keys -t $SESSION_NAME:gemini 'gemini' C-m
+
+# Select the first window as the default
+tmux select-window -t $SESSION_NAME:1

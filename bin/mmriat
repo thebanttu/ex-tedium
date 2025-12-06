@@ -1,0 +1,24 @@
+#!/bin/bash
+
+# This script starts a GCP IAP tunnel to a remote rTorrent instance in the background.
+
+# --- Configuration ---
+INSTANCE_NAME="disposable-micro-vm"
+REMOTE_PORT="80"
+LOCAL_PORT="5002"
+INSTANCE_ZONE="us-central1-a"
+
+echo "Starting IAP tunnel for $INSTANCE_NAME in the background..."
+echo "Local: localhost:$LOCAL_PORT -> Remote: $REMOTE_PORT"
+
+# --- Command ---
+# The '&' runs the command in the background.
+# The output from gcloud is redirected to /dev/null to keep the terminal clean.
+gcloud compute start-iap-tunnel "$INSTANCE_NAME" "$REMOTE_PORT" \
+    --local-host-port="localhost:$LOCAL_PORT" \
+    --zone="$INSTANCE_ZONE" > /dev/null 2>&1 &
+
+# Capture and print the Process ID (PID) of the background job
+TUNNEL_PID=$!
+echo "Tunnel started with PID: $TUNNEL_PID"
+echo "To stop the tunnel, run: kill $TUNNEL_PID"

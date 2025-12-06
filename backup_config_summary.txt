@@ -1,0 +1,93 @@
+BACKUP CONFIGURATION SUMMARY
+============================
+
+This file shows what the pbkp.py script backs up and where it goes.
+
+PERSONAL ENVIRONMENT BACKUP
+Location: ~/Projects/backup/env/
+Git repo: git@github.com:thebanttu/bantu-env.git
+
+Items backed up:
+1. Shell utilities
+   From: ~/bin/
+   To: ~/Projects/backup/env/bin/
+   What: Deployment scripts, custom utilities
+
+2. Python libraries
+   From: ~/ex-tedium/lib/bantu/
+   To: ~/Projects/backup/env/lib/
+   What: Personal Python utility libraries
+
+3. Emacs configuration
+   From: ~/.emacs.d/
+   To: ~/Projects/backup/env/config/emacs/
+   Excludes: ~/.excludes/emacs.exclude.txt
+
+4. Dotfiles
+   Files: .gitconfig, .rgignore, .rtorrent.rc, .tmux.conf, .vim,
+          .xbindkeysrc, .xinitrc, .zshrc, .Xresources, .bashrc, .profile
+   To: ~/Projects/backup/env/config/dotfiles/
+
+5. App configs (from ~/.config/)
+   Subdirs: claude-code, git, ranger, cursor
+   To: ~/Projects/backup/env/config/app-configs/
+
+6. MPV config
+   From: ~/.config/mpv/
+   To: ~/Projects/backup/env/config/mpv/
+
+7. Package list
+   File: ~/.pkg-list.txt
+   To: ~/Projects/backup/env/config/pkg/
+
+8. Exclude lists
+   From: ~/.excludes/
+   To: ~/Projects/backup/env/exclude/
+
+9. SSH config
+   From: ~/.ssh/
+   To: ~/Projects/backup/env/config/ssh/
+
+NOTES BACKUP
+Location: ~/.Notes
+Git repo: git@gitlab.com:thebanttu/my-org.git
+What: Personal notes and documentation
+
+EX-TEDIUM REPO SYNC
+Location: ~/ex-tedium
+Git repo: git@github.com:thebanttu/ex-tedium.git
+
+Items synced:
+1. Binary scripts
+   From: ~/bin/
+   To: ~/ex-tedium/bin/
+
+2. Exclude files
+   From: ~/.excludes/
+   To: ~/ex-tedium/files/
+
+EXCLUDED PATTERNS (WSL-aware)
+- .git directories
+- node_modules
+- __pycache__
+- vendor directories
+- Virtual environments (venv, .venv)
+- Terraform (.terraform)
+- Build artifacts (dist, build)
+- Cache directories
+- Temporary files (.swp, .swo, .swn)
+- .DS_Store, Thumbs.db
+- .claude directories
+
+USAGE
+-----
+Normal backup:
+  ./bin/pbkp.py
+
+Dry run (test only):
+  ./bin/pbkp.py --dry-run
+
+Help:
+  ./bin/pbkp.py --help
+
+See BACKUP_README.md for full documentation.
