@@ -18,14 +18,16 @@ from pprint import pprint as pp
 
 # Configuration
 home = os.environ.get('HOME')
+winhome = os.environ.get('WINHOME', '/mnt/c/Users/ADMIN')  # WSL Windows home
 backup_root = Path(home) / 'Projects' / 'backup'
 backup_target = str(backup_root / 'env')
+notes_backup_target = str(backup_root / 'notes')
 python_version = f"{sys.version_info.major}.{sys.version_info.minor}"
 
 # Git repositories
 repos = {
     "env": "git@github.com:thebanttu/bantu-env.git",
-    "notes": "git@gitlab.com:thebanttu/my-org.git",
+    "notes": "git@github.com:thebanttu/my-org.git",
     "extedium": "git@github.com:thebanttu/ex-tedium.git",
 }
 
@@ -479,27 +481,59 @@ def sync_personal_bkp_repo(dry_run: bool = False):
     return
 
 def sync_notes_repo(dry_run: bool = False):
-    """Sync notes repository"""
+    """Sync notes repository from Windows Notes directory"""
     print("\n" + "="*60)
     print("SYNCING NOTES REPO")
     print("="*60)
 
     try:
-        d = os.path.expanduser("~/.Notes")
-        if not exists(d):
-            stats.add_skipped('notes_repo', "Notes directory doesn't exist")
+        # Source: Windows Notes directory
+        notes_source = os.path.join(winhome, 'Notes')
+        if not exists(notes_source):
+            stats.add_skipped('notes_repo', f"Notes directory doesn't exist at {notes_source}")
+            print(f"⚠ Notes source not found: {notes_source}")
             return
 
-        repo = bgr.get_repo(d, url=repos["notes"])
+        # Ensure backup target exists
+        os.makedirs(notes_backup_target, exist_ok=True)
+
+        # Initialize or get the git repo at backup location
+        repo = bgr.get_repo(notes_backup_target, url=repos["notes"])
+
+        # Sync Notes content from Windows to backup location
+        print(f"\n→ Syncing Windows Notes")
+        print(f"  {notes_source} → {notes_backup_target}")
+
+        # Create exclude file for nested git repos and other WSL artifacts
+        notes_excludes = wsl_excludes.copy()
 
         if not dry_run:
+            sync_directory(
+                notes_source + '/',  # trailing slash for rsync
+                notes_backup_target + '/',
+                "Windows Notes content",
+                exclude_patterns=notes_excludes,
+                dry_run=False
+            )
+
+            # Now commit and push
             repo.show_changes()
             repo.update_repo(make_commit_message())
         else:
+            sync_directory(
+                notes_source + '/',
+                notes_backup_target + '/',
+                "Windows Notes content",
+                exclude_patterns=notes_excludes,
+                dry_run=True
+            )
             print("[DRY RUN] Skipping git operations")
+
     except Exception as e:
         stats.add_error('notes_repo', str(e))
         print(f"✗ Error syncing notes repo: {e}")
+        import traceback
+        traceback.print_exc()
 
     return
 
@@ -543,7 +577,7 @@ def main():
     help_requested = '--help' in sys.argv or '-h' in sys.argv
 
     if help_requested:
-        print("""
+        print(f"""
 Personal Backup Script - Enhanced for WSL
 
 Usage: pbkp.py [OPTIONS]
@@ -553,18 +587,31 @@ Options:
   -h, --help       Show this help message
 
 This script backs up:
-  - Shell utilities and scripts
-  - Configuration files
-  - Python libraries
+  - Shell utilities and scripts from ~/bin/
+  - Configuration files (.emacs.d, dotfiles, ~/.config)
+  - Python libraries from ~/ex-tedium/lib/bantu/
+  - Windows Notes from $WINHOME/Notes/
   - Application configs
   - And syncs to git repositories
 
+Current Configuration:
+  HOME: {home}
+  WINHOME: {winhome}
+  Backup root: {backup_root}
+  Notes source: {os.path.join(winhome, 'Notes')}
+
 The script intelligently excludes:
   - .git directories
-  - node_modules
-  - Python virtual environments
-  - Build artifacts
-  - Temporary files
+  - node_modules, vendor directories
+  - Python virtual environments (__pycache__, venv, .venv)
+  - Build artifacts (dist, build, .terraform)
+  - Temporary files (.swp, .swo, vim swap files)
+  - .claude directories
+
+Repositories:
+  - Personal env: {repos['env']}
+  - Notes: {repos['notes']}
+  - Ex-tedium: {repos['extedium']}
 """)
         return 0
 

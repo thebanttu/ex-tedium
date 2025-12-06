@@ -71,8 +71,17 @@ The `bin/pbkp.py` script backs up critical configurations, scripts, and data to 
 
 4. **Package List**: `~/.pkg-list.txt`
 
-### Notes Repository (`~/.Notes`)
-- Personal notes and documentation (if directory exists)
+### Notes Repository (`~/Projects/backup/notes/`)
+- **Source**: `$WINHOME/Notes/` (Windows Notes directory)
+  - Typically `/mnt/c/Users/ADMIN/Notes/`
+  - Includes all subdirectories: `org/`, `My-Notes/`, `meetings/`, etc.
+- **Target**: `~/Projects/backup/notes/`
+- **Git Repo**: `git@github.com:thebanttu/my-org.git`
+- Personal notes, org files, meeting notes, and documentation
+- **Important**: Automatically excludes nested `.git` directories to avoid conflicts
+  - Your `org/` subdirectory may have its own `.git` folder
+  - The backup script will sync the content but skip the nested git repo
+  - This prevents repository-within-repository issues
 
 ### Ex-tedium Repository (this repo)
 - Syncs specific scripts and libraries back to this repo
@@ -100,6 +109,16 @@ After backup, the structure looks like:
 ```
 
 ## Configuration
+
+### Environment Variables
+
+The script uses these environment variables:
+- `HOME`: Your Linux home directory (automatically set)
+- `WINHOME`: Your Windows home directory in WSL (default: `/mnt/c/Users/ADMIN`)
+  - Set this if your Windows username differs
+  - Example: `export WINHOME=/mnt/c/Users/YourUsername`
+
+### Customization
 
 Edit `bin/pbkp.py` to customize:
 

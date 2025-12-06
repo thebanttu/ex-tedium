@@ -49,9 +49,15 @@ Items backed up:
    To: ~/Projects/backup/env/config/ssh/
 
 NOTES BACKUP
-Location: ~/.Notes
-Git repo: git@gitlab.com:thebanttu/my-org.git
-What: Personal notes and documentation
+Source: $WINHOME/Notes (typically /mnt/c/Users/ADMIN/Notes/)
+Target: ~/Projects/backup/notes/
+Git repo: git@github.com:thebanttu/my-org.git
+What: All Windows Notes content including:
+  - org/ subdirectory (org-mode files)
+  - My-Notes/ subdirectory
+  - meetings/ subdirectory
+  - SQL files and other notes
+Note: Excludes nested .git directories to avoid conflicts
 
 EX-TEDIUM REPO SYNC
 Location: ~/ex-tedium
