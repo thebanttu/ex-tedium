@@ -580,6 +580,20 @@ def restore_from_backup(backup_dir: str, dry_run: bool = False,
             'symlink': use_symlinks
         })
 
+    # 9. Notes (from separate notes backup)
+    # Notes are backed up to ~/Projects/backup/notes/ (separate git repo)
+    notes_backup = backup_path.parent / 'notes'
+    if notes_backup.exists():
+        restorations.append({
+            'type': 'directory',
+            'source': str(notes_backup),
+            'target': os.path.join(home, 'Notes'),
+            'description': 'Personal notes',
+            'symlink': use_symlinks
+        })
+    else:
+        stats.add_skipped('notes', f"Notes backup not found at {notes_backup}. Clone it separately if needed.")
+
     # Execute restorations
     if not dry_run:
         for item in restorations:
@@ -659,6 +673,20 @@ Examples:
 
   # Auto-clone from custom repo URL
   %(prog)s --auto-clone --repo-url git@gitlab.com:user/backup.git
+
+What gets restored:
+  - Dotfiles (.bashrc, .zshrc, .gitconfig, etc.) → ~/
+  - Emacs config → ~/.emacs.d/
+  - App configs (claude-code, git, ranger, cursor, mpv) → ~/.config/
+  - SSH keys → ~/.ssh/
+  - Shell utilities → ~/bin/
+  - Python libraries → ~/ex-tedium/lib/bantu/ or ~/.local/lib/python/bantu/
+  - Exclude lists → ~/.excludes/
+  - Personal notes → ~/Notes/ (if backup exists at ~/Projects/backup/notes/)
+  - System packages from .pkg-list.txt
+
+Note: Notes are in a separate git repo. To restore notes, clone it first:
+  git clone git@github.com:thebanttu/my-org.git ~/Projects/backup/notes
 
 Supported distributions:
   - Fedora 43 (dnf)
