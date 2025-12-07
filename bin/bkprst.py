@@ -12,6 +12,7 @@ import shutil
 import argparse
 from pathlib import Path
 from typing import Dict, List, Tuple, Optional
+from datetime import datetime
 
 class RestoreStats:
     """Track restoration statistics"""
@@ -322,13 +323,24 @@ def install_packages(pkg_list_file: str, distro: str, pkg_mgr: str,
     print(f"    Available to install: {len(available)}")
     if missing:
         print(f"    Not found in repos: {len(missing)}")
-        if len(missing) <= 5:
-            for pkg in missing:
-                print(f"      - {pkg}")
-        else:
-            for pkg in missing[:5]:
-                print(f"      - {pkg}")
-            print(f"      ... and {len(missing) - 5} more")
+
+        # Save missing packages to a file for review
+        missing_pkg_file = os.path.join(os.path.dirname(pkg_list_file), 'missing-packages.txt')
+        try:
+            with open(missing_pkg_file, 'w') as f:
+                f.write(f"# Packages not found in repositories\n")
+                f.write(f"# Generated on {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+                f.write(f"# Total: {len(missing)} packages\n\n")
+                for pkg in missing:
+                    f.write(f"{pkg}\n")
+            print(f"    Missing packages saved to: {missing_pkg_file}")
+        except Exception as e:
+            print(f"    Warning: Could not save missing packages list: {e}")
+
+        # Show all missing packages in output
+        print(f"\n    Missing packages:")
+        for pkg in missing:
+            print(f"      - {pkg}")
 
     if not available:
         if already_installed:
