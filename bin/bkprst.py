@@ -20,6 +20,8 @@ class RestoreStats:
         self.errors = []
         self.skipped = []
         self.packages_installed = 0
+        self.packages_already_installed = 0
+        self.packages_missing = 0
 
     def add_error(self, item: str, error: str):
         self.errors.append((item, error))
@@ -32,7 +34,14 @@ class RestoreStats:
         print("RESTORATION SUMMARY")
         print("="*60)
         print(f"Files/directories restored: {self.files_restored}")
-        print(f"Packages installed: {self.packages_installed}")
+
+        # Package info
+        if self.packages_installed > 0:
+            print(f"Packages newly installed: {self.packages_installed}")
+        if self.packages_already_installed > 0:
+            print(f"Packages already present: {self.packages_already_installed}")
+        if self.packages_missing > 0:
+            print(f"Packages not in repos: {self.packages_missing}")
 
         if self.skipped:
             print(f"\nSkipped items: {len(self.skipped)}")
@@ -218,6 +227,49 @@ def restore_files(source_dir: str, target_dir: str, files: List[str],
         stats.add_skipped(description, "No files found to restore")
         return False
 
+def check_package_availability(packages: List[str], pkg_mgr: str) -> Tuple[List[str], List[str], List[str]]:
+    """
+    Check which packages are available, already installed, or missing
+    Returns: (available, already_installed, missing)
+    """
+    available = []
+    already_installed = []
+    missing = []
+
+    if pkg_mgr == 'dnf':
+        # Check what's already installed
+        for pkg in packages:
+            cmd = ['rpm', '-q', pkg]
+            success, _ = run_command(cmd, f'check_{pkg}', check=False)
+            if success:
+                already_installed.append(pkg)
+            else:
+                # Check if available in repos
+                cmd = ['dnf', 'list', '--available', pkg]
+                success, _ = run_command(cmd, f'check_avail_{pkg}', check=False)
+                if success:
+                    available.append(pkg)
+                else:
+                    missing.append(pkg)
+
+    elif pkg_mgr == 'xbps':
+        # Check what's already installed
+        for pkg in packages:
+            cmd = ['xbps-query', pkg]
+            success, _ = run_command(cmd, f'check_{pkg}', check=False)
+            if success:
+                already_installed.append(pkg)
+            else:
+                # Check if available in remote repos
+                cmd = ['xbps-query', '-R', pkg]
+                success, _ = run_command(cmd, f'check_avail_{pkg}', check=False)
+                if success:
+                    available.append(pkg)
+                else:
+                    missing.append(pkg)
+
+    return available, already_installed, missing
+
 def install_packages(pkg_list_file: str, distro: str, pkg_mgr: str,
                     dry_run: bool = False) -> bool:
     """
@@ -239,39 +291,71 @@ def install_packages(pkg_list_file: str, distro: str, pkg_mgr: str,
         stats.add_skipped('package_installation', "No packages in list")
         return False
 
-    print(f"  Found {len(packages)} packages")
+    print(f"  Found {len(packages)} packages in list")
+
+    # Check package availability
+    print(f"  Checking package availability...")
+    available, already_installed, missing = check_package_availability(packages, pkg_mgr)
+
+    # Report findings
+    print(f"\n  Package status:")
+    print(f"    Already installed: {len(already_installed)}")
+    print(f"    Available to install: {len(available)}")
+    if missing:
+        print(f"    Not found in repos: {len(missing)}")
+        if len(missing) <= 5:
+            for pkg in missing:
+                print(f"      - {pkg}")
+        else:
+            for pkg in missing[:5]:
+                print(f"      - {pkg}")
+            print(f"      ... and {len(missing) - 5} more")
+
+    if not available:
+        if already_installed:
+            stats.packages_already_installed = len(already_installed)
+            stats.packages_missing = len(missing)
+            print(f"\n  ✓ All packages already installed, nothing to do")
+            return True
+        else:
+            stats.packages_missing = len(missing)
+            print(f"\n  ✗ No packages available to install")
+            return False
 
     if dry_run:
-        print("  [DRY RUN] Would install:")
-        for pkg in packages[:10]:
+        print("\n  [DRY RUN] Would install:")
+        for pkg in available[:10]:
             print(f"    - {pkg}")
-        if len(packages) > 10:
-            print(f"    ... and {len(packages) - 10} more")
+        if len(available) > 10:
+            print(f"    ... and {len(available) - 10} more")
         return True
 
-    # Construct install command based on distro
+    # Construct install command for available packages only
     if pkg_mgr == 'dnf':
-        # Fedora
-        cmd = ['sudo', 'dnf', 'install', '-y'] + packages
+        cmd = ['sudo', 'dnf', 'install', '-y'] + available
     elif pkg_mgr == 'xbps':
-        # Void Linux
-        cmd = ['sudo', 'xbps-install', '-Sy'] + packages
+        cmd = ['sudo', 'xbps-install', '-Sy'] + available
     else:
         stats.add_error('package_installation',
                        f"Unsupported package manager: {pkg_mgr}")
         return False
 
-    print(f"  Running: {' '.join(cmd[:4])} ... ({len(packages)} packages)")
-
+    print(f"\n  Installing {len(available)} packages...")
     success, output = run_command(cmd, 'package_installation', check=False)
 
     if success:
-        print(f"  ✓ Package installation completed")
-        stats.packages_installed = len(packages)
+        stats.packages_installed = len(available)
+        stats.packages_already_installed = len(already_installed)
+        stats.packages_missing = len(missing)
+        print(f"  ✓ Successfully installed {len(available)} packages")
+        if already_installed:
+            print(f"  ({len(already_installed)} were already installed)")
+        if missing:
+            print(f"  ⚠ {len(missing)} packages not found in repositories")
         return True
     else:
         print(f"  ✗ Package installation failed")
-        print(f"     You may need to manually install packages")
+        print(f"     Check the output above for errors")
         print(f"     Package list: {pkg_list_file}")
         return False
 
