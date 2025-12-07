@@ -84,8 +84,12 @@ The `bin/pbkp.py` script backs up critical configurations, scripts, and data to 
   - This prevents repository-within-repository issues
 
 ### Ex-tedium Repository (this repo)
-- Syncs specific scripts and libraries back to this repo
-- Keeps this repo updated with your latest tools
+- Commits any local changes to the ex-tedium repository
+- **Deploys** tools FROM ex-tedium TO home directories:
+  - `ex-tedium/bin/` → `~/bin/` (installs/updates scripts)
+  - `ex-tedium/files/` → `~/.excludes/` (installs exclude files)
+- Uses `rsync --update` to only copy if source is newer
+- This prevents ex-tedium from being clobbered by older versions in ~/bin/
 
 ## Directory Structure
 

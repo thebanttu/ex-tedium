@@ -189,8 +189,10 @@ class bantu_utils:
         if 'ex' in kwargs:
             exclude = __class__.make_rsync_excludes(kwargs['ex'])
             cmd += exclude
-        if 'dry' in kwargs:
+        if 'dry' in kwargs or 'dry_run' in kwargs:
             cmd += [ "--dry-run" ]
+        if 'update' in kwargs and kwargs['update']:
+            cmd += [ "--update" ]  # Only copy if source is newer
         if type(s) is list:
             cmd += s
             prefix_1 = "Sending"

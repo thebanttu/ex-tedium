@@ -63,14 +63,15 @@ EX-TEDIUM REPO SYNC
 Location: ~/ex-tedium
 Git repo: git@github.com:thebanttu/ex-tedium.git
 
-Items synced:
-1. Binary scripts
-   From: ~/bin/
-   To: ~/ex-tedium/bin/
+How it works:
+1. Commits any local changes in ex-tedium repository
+2. Deploys tools FROM ex-tedium TO home directories:
+   - ex-tedium/bin/ → ~/bin/ (updates scripts)
+   - ex-tedium/files/ → ~/.excludes/ (updates exclude files)
+3. Uses rsync --update to only copy if source is newer
 
-2. Exclude files
-   From: ~/.excludes/
-   To: ~/ex-tedium/files/
+This ensures ex-tedium is the source of truth and prevents
+newer versions from being overwritten by older ones.
 
 EXCLUDED PATTERNS (WSL-aware)
 - .git directories

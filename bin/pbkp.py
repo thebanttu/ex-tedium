@@ -170,31 +170,9 @@ backup_config = {
         ],
     },
 
-    # Ex-tedium bins
-    'ex_tedium_bins': {
-        'source': home + '/bin/',
-        'target': home + '/ex-tedium/bin/',
-        'description': 'Ex-tedium binary scripts',
-        'exclude_patterns': wsl_excludes,
-        'repo': 'extedium',
-    },
-
-    # Ex-tedium libs
-    'ex_tedium_libs': {
-        'source': home + '/ex-tedium/lib/bantu/',
-        'target': home + '/ex-tedium/lib/bantu/',
-        'description': 'Ex-tedium library files',
-        'exclude_patterns': wsl_excludes,
-        'repo': 'extedium',
-    },
-
-    # Ex-tedium exclude files
-    'ex_tedium_excludes': {
-        'source': home + '/.excludes/',
-        'target': home + '/ex-tedium/files/',
-        'description': 'Ex-tedium exclude files',
-        'repo': 'extedium',
-    },
+    # Note: ex-tedium files are NOT synced here since ex-tedium is a git repo
+    # Instead, we sync FROM ex-tedium TO home directories to deploy updates
+    # See sync_ex_tedium_repo() for deployment logic
 }
 
 class BackupStats:
@@ -547,7 +525,13 @@ def sync_notes_repo(dry_run: bool = False):
     return
 
 def sync_ex_tedium_repo(dry_run: bool = False):
-    """Sync ex-tedium repository"""
+    """
+    Sync ex-tedium repository
+
+    This function:
+    1. Commits any local changes in ex-tedium
+    2. Deploys tools FROM ex-tedium TO home directories
+    """
     print("\n" + "="*60)
     print("SYNCING EX-TEDIUM REPO")
     print("="*60)
@@ -556,23 +540,49 @@ def sync_ex_tedium_repo(dry_run: bool = False):
         d = os.path.expanduser('~/ex-tedium')
         repo = bgr.get_repo(d, url=repos["extedium"])
 
-        # Sync ex-tedium specific configs
-        for name, config in backup_config.items():
-            if config.get('repo') == 'extedium':
-                if 'source' in config:
-                    sync_directory(
-                        config['source'],
-                        config['target'],
-                        config.get('description', name),
-                        exclude_patterns=config.get('exclude_patterns'),
-                        dry_run=dry_run
-                    )
-
+        # First, commit any changes in ex-tedium repo
         if not dry_run:
             repo.show_changes()
             repo.update_repo(make_commit_message())
         else:
-            print("[DRY RUN] Skipping git operations")
+            print("\n[DRY RUN] Would commit ex-tedium changes")
+
+        # Now deploy FROM ex-tedium TO home directories
+        # This ensures ex-tedium is the source of truth
+        print("\n→ Deploying ex-tedium tools to home directory")
+
+        deployments = [
+            {
+                'source': d + '/bin/',
+                'target': home + '/bin/',
+                'description': 'Deploy ex-tedium scripts to ~/bin/',
+            },
+            {
+                'source': d + '/files/',
+                'target': home + '/.excludes/',
+                'description': 'Deploy exclude files to ~/.excludes/',
+            },
+        ]
+
+        for deploy in deployments:
+            if exists(deploy['source']):
+                # Use rsync with update flag to only copy if source is newer
+                try:
+                    kwargs = {
+                        'ex': [home + '/.excludes/junk.txt'],
+                        'update': True,  # Only copy if source is newer
+                    }
+                    if dry_run:
+                        kwargs['dry_run'] = True
+                        print(f"  [DRY RUN] Would deploy: {deploy['source']} → {deploy['target']}")
+                    else:
+                        print(f"  {deploy['description']}")
+                        bu.xrsync(deploy['source'], deploy['target'], **kwargs)
+                        print(f"  ✓ Deployed")
+                except Exception as e:
+                    stats.add_error(deploy['description'], str(e))
+                    print(f"  ✗ Error: {e}")
+
     except Exception as e:
         stats.add_error('ex_tedium_repo', str(e))
         print(f"✗ Error syncing ex-tedium repo: {e}")
