@@ -1,51 +1,13 @@
 #!/usr/bin/env bash
+
 present=0
-mmm(){
-  for n in `jot 5 0`
-  do
+for n in `jot 5 0`
+do
     present=$(doas disklabel sd${n} >&/dev/null; echo $?)
     [ $present -eq 4 ] && continue
     doas mount /dev/sd${n}e /mnt/usb
     break
-  done
+done
 
-  [[ $present -ne 102 ]] && \
+[[ $present -ne 102 ]] && \
     echo Could NOT find an attached drive. Please check. >&2
-}
-
-mm(){
-  if [ $# -ne 1 ]
-  then
-    echo Enter one search key word >&2
-    exit 1
-  fi
-  WORKDIR=/home/bantu/docker-rtorrent-rutorrent/examples/compose/downloads/temp
-  DEST=$WINHOME/Videos/Basket
-  cd $WORKDIR
-  s ls >/dev/null
-  find . \
-    -depth \
-    -type f \
-    -iname '*'${1}'*' | \
-    sudo cpio -pmdv $DEST
-}
-
-bm(){
-  if [ $# -ne 1 ]
-  then
-    echo Enter one search key word >&2
-    exit 1
-  fi
-  WORKDIR=/home/bantu/docker-rtorrent-rutorrent/examples/compose/downloads/temp
-  DEST=$WINHOME/Videos/Basket
-  cd $WORKDIR
-  s ls >/dev/null
-  find . \
-    -depth \
-    -type f \
-    -iname '*'${1}'*' | \
-    sudo cpio -pmdv $DEST
-}
-
-mm $*
-mm $*

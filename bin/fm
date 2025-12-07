@@ -5,7 +5,7 @@ import bantu.utils
 import os, re, subprocess, sys, time
 from bantu.media import bantu_media as bm
 
-media_host = 'sms'
+media_host = 'poseidon'
 
 if __name__ == "__main__":
     bm.ensure_basket_exists()

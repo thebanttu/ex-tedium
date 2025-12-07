@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+
+MANPATH=$(echo /usr/{share,X11R7,pkg,local}/man | sed "s/ /:/g") /usr/pkg/bin/emacs &
