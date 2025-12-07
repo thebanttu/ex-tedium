@@ -159,6 +159,15 @@ backup_config = {
         'target': backup_target + '/config/ssh/',
         'description': 'SSH configuration and keys',
         'exclude': [],  # Be careful with private keys
+        'exclude_patterns': [
+            # Exclude SSH control sockets (numeric filenames)
+            '**/[0-9]*',
+            # Exclude SSH agent sockets
+            '**/agent.*',
+            # Exclude ControlMaster sockets
+            '**/ControlMaster-*',
+            '**/cm-*',
+        ],
     },
 
     # Ex-tedium bins

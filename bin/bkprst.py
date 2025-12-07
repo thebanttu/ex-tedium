@@ -95,8 +95,36 @@ def run_command(cmd: List[str], description: str, check=True, shell=False) -> Tu
         stats.add_error(description, str(e))
         return (False, str(e))
 
+def is_ssh_socket(path: str) -> bool:
+    """
+    Check if a file is an SSH control socket
+    SSH sockets are typically numeric filenames or special socket files
+    """
+    filename = os.path.basename(path)
+    # Numeric filenames (SSH ControlMaster sockets)
+    if filename.isdigit():
+        return True
+    # SSH agent sockets
+    if filename.startswith('agent.'):
+        return True
+    # ControlMaster patterns
+    if filename.startswith(('ControlMaster-', 'cm-')):
+        return True
+    return False
+
+def ignore_sockets(src: str, names: List[str]) -> List[str]:
+    """
+    Ignore function for shutil.copytree to skip SSH sockets
+    """
+    ignored = []
+    for name in names:
+        if is_ssh_socket(name):
+            ignored.append(name)
+    return ignored
+
 def restore_directory(source: str, target: str, description: str,
-                     create_symlink: bool = False, backup_existing: bool = True) -> bool:
+                     create_symlink: bool = False, backup_existing: bool = True,
+                     skip_sockets: bool = False) -> bool:
     """
     Restore a directory from backup
     """
@@ -133,8 +161,9 @@ def restore_directory(source: str, target: str, description: str,
         else:
             # Copy directory
             if os.path.isdir(source):
+                ignore_func = ignore_sockets if skip_sockets else None
                 shutil.copytree(source, target, dirs_exist_ok=True,
-                              symlinks=True)
+                              symlinks=True, ignore=ignore_func)
             else:
                 shutil.copy2(source, target)
             print(f"  ✓ Copied")
@@ -246,18 +275,73 @@ def install_packages(pkg_list_file: str, distro: str, pkg_mgr: str,
         print(f"     Package list: {pkg_list_file}")
         return False
 
+def clone_backup_repo(target_dir: str, repo_url: str) -> bool:
+    """
+    Clone the backup repository from git
+    """
+    print(f"\n→ Cloning backup repository")
+    print(f"  From: {repo_url}")
+    print(f"  To: {target_dir}")
+
+    # Create parent directory
+    parent_dir = os.path.dirname(target_dir)
+    try:
+        os.makedirs(parent_dir, exist_ok=True)
+    except Exception as e:
+        print(f"✗ Failed to create directory {parent_dir}: {e}")
+        return False
+
+    # Clone the repo
+    cmd = ['git', 'clone', repo_url, target_dir]
+    success, output = run_command(cmd, 'git_clone', check=False)
+
+    if success:
+        print(f"  ✓ Repository cloned successfully")
+        return True
+    else:
+        print(f"  ✗ Failed to clone repository")
+        return False
+
 def restore_from_backup(backup_dir: str, dry_run: bool = False,
-                       skip_packages: bool = False, use_symlinks: bool = False):
+                       skip_packages: bool = False, use_symlinks: bool = False,
+                       auto_clone: bool = False, repo_url: str = None):
     """
     Main restoration function
     """
     backup_path = Path(backup_dir)
     home = os.path.expanduser('~')
 
+    # Default repo URL if not provided
+    if repo_url is None:
+        repo_url = "git@github.com:thebanttu/bantu-env.git"
+
     # Validate backup directory
     if not backup_path.exists():
-        print(f"✗ Backup directory not found: {backup_dir}")
-        return False
+        print(f"⚠ Backup directory not found: {backup_dir}")
+        print(f"\nThe backup needs to be cloned from the git repository first.")
+
+        if auto_clone:
+            print(f"\nAttempting to clone from {repo_url}...")
+            if clone_backup_repo(backup_dir, repo_url):
+                print(f"✓ Backup cloned successfully, continuing with restoration...")
+            else:
+                print(f"\n✗ Failed to clone backup repository")
+                print(f"\nManual steps:")
+                print(f"  1. Ensure SSH keys are set up for git access")
+                print(f"  2. Clone manually: git clone {repo_url} {backup_dir}")
+                print(f"  3. Run this script again")
+                return False
+        else:
+            print(f"\nTo clone the backup, you can either:")
+            print(f"  1. Run this script with --auto-clone flag:")
+            print(f"     {sys.argv[0]} --auto-clone")
+            print(f"\n  2. Clone manually:")
+            print(f"     git clone {repo_url} {backup_dir}")
+            print(f"\n  3. Or specify a different backup directory:")
+            print(f"     {sys.argv[0]} -b /path/to/backup")
+            print(f"\nNote: You'll need SSH keys set up for git access.")
+            print(f"      Test with: ssh -T git@github.com")
+            return False
 
     print("\n" + "="*60)
     print("PERSONAL BACKUP RESTORATION")
@@ -335,7 +419,8 @@ def restore_from_backup(backup_dir: str, dry_run: bool = False,
             'source': str(ssh_source),
             'target': os.path.join(home, '.ssh'),
             'description': 'SSH configuration',
-            'symlink': use_symlinks
+            'symlink': use_symlinks,
+            'skip_sockets': True  # Skip SSH control sockets
         })
 
     # 6. Shell utilities (bin)
@@ -388,7 +473,8 @@ def restore_from_backup(backup_dir: str, dry_run: bool = False,
                     item['source'],
                     item['target'],
                     item['description'],
-                    create_symlink=item.get('symlink', False)
+                    create_symlink=item.get('symlink', False),
+                    skip_sockets=item.get('skip_sockets', False)
                 )
             elif item['type'] == 'files':
                 restore_files(
@@ -438,7 +524,10 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  # Restore from default backup location
+  # Auto-clone backup from git and restore
+  %(prog)s --auto-clone
+
+  # Restore from default backup location (if already cloned)
   %(prog)s
 
   # Restore from custom backup directory
@@ -452,6 +541,9 @@ Examples:
 
   # Use symlinks instead of copying files
   %(prog)s --symlinks
+
+  # Auto-clone from custom repo URL
+  %(prog)s --auto-clone --repo-url git@gitlab.com:user/backup.git
 
 Supported distributions:
   - Fedora 43 (dnf)
@@ -468,6 +560,11 @@ Supported distributions:
                        help='Skip package installation')
     parser.add_argument('--symlinks', action='store_true',
                        help='Create symlinks instead of copying files')
+    parser.add_argument('--auto-clone', action='store_true',
+                       help='Automatically clone backup from git if not found locally')
+    parser.add_argument('--repo-url',
+                       default='git@github.com:thebanttu/bantu-env.git',
+                       help='Git repository URL for backup (default: git@github.com:thebanttu/bantu-env.git)')
 
     args = parser.parse_args()
 
@@ -480,7 +577,9 @@ Supported distributions:
             backup_dir,
             dry_run=args.dry_run,
             skip_packages=args.skip_packages,
-            use_symlinks=args.symlinks
+            use_symlinks=args.symlinks,
+            auto_clone=args.auto_clone,
+            repo_url=args.repo_url
         )
 
         # Print summary
