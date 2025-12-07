@@ -419,16 +419,19 @@ def clone_backup_repo(target_dir: str, repo_url: str) -> bool:
 
 def restore_from_backup(backup_dir: str, dry_run: bool = False,
                        skip_packages: bool = False, use_symlinks: bool = False,
-                       auto_clone: bool = False, repo_url: str = None):
+                       auto_clone: bool = False, repo_url: str = None,
+                       notes_repo_url: str = None):
     """
     Main restoration function
     """
     backup_path = Path(backup_dir)
     home = os.path.expanduser('~')
 
-    # Default repo URL if not provided
+    # Default repo URLs if not provided
     if repo_url is None:
         repo_url = "git@github.com:thebanttu/bantu-env.git"
+    if notes_repo_url is None:
+        notes_repo_url = "git@github.com:thebanttu/my-org.git"
 
     # Validate backup directory
     if not backup_path.exists():
@@ -436,11 +439,11 @@ def restore_from_backup(backup_dir: str, dry_run: bool = False,
         print(f"\nThe backup needs to be cloned from the git repository first.")
 
         if auto_clone:
-            print(f"\nAttempting to clone from {repo_url}...")
+            print(f"\nAttempting to clone environment backup from {repo_url}...")
             if clone_backup_repo(backup_dir, repo_url):
-                print(f"✓ Backup cloned successfully, continuing with restoration...")
+                print(f"✓ Environment backup cloned successfully")
             else:
-                print(f"\n✗ Failed to clone backup repository")
+                print(f"\n✗ Failed to clone environment backup repository")
                 print(f"\nManual steps:")
                 print(f"  1. Ensure SSH keys are set up for git access")
                 print(f"  2. Clone manually: git clone {repo_url} {backup_dir}")
@@ -457,6 +460,17 @@ def restore_from_backup(backup_dir: str, dry_run: bool = False,
             print(f"\nNote: You'll need SSH keys set up for git access.")
             print(f"      Test with: ssh -T git@github.com")
             return False
+
+    # Check and clone notes repository if auto_clone is enabled
+    notes_backup = backup_path.parent / 'notes'
+    if auto_clone and not notes_backup.exists():
+        print(f"\n→ Notes backup not found, cloning from {notes_repo_url}...")
+        if clone_backup_repo(str(notes_backup), notes_repo_url):
+            print(f"✓ Notes backup cloned successfully")
+        else:
+            print(f"⚠ Failed to clone notes repository (non-fatal)")
+            print(f"  You can clone it manually later:")
+            print(f"  git clone {notes_repo_url} {notes_backup}")
 
     print("\n" + "="*60)
     print("PERSONAL BACKUP RESTORATION")
@@ -653,7 +667,7 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  # Auto-clone backup from git and restore
+  # Auto-clone both environment and notes backups, then restore
   %(prog)s --auto-clone
 
   # Restore from default backup location (if already cloned)
@@ -671,8 +685,9 @@ Examples:
   # Use symlinks instead of copying files
   %(prog)s --symlinks
 
-  # Auto-clone from custom repo URL
-  %(prog)s --auto-clone --repo-url git@gitlab.com:user/backup.git
+  # Auto-clone from custom repo URLs
+  %(prog)s --auto-clone --repo-url git@gitlab.com:user/backup.git \
+      --notes-repo-url git@gitlab.com:user/notes.git
 
 What gets restored:
   - Dotfiles (.bashrc, .zshrc, .gitconfig, etc.) → ~/
@@ -682,11 +697,12 @@ What gets restored:
   - Shell utilities → ~/bin/
   - Python libraries → ~/ex-tedium/lib/bantu/ or ~/.local/lib/python/bantu/
   - Exclude lists → ~/.excludes/
-  - Personal notes → ~/Notes/ (if backup exists at ~/Projects/backup/notes/)
+  - Personal notes → ~/Notes/ (automatically cloned with --auto-clone)
   - System packages from .pkg-list.txt
 
-Note: Notes are in a separate git repo. To restore notes, clone it first:
-  git clone git@github.com:thebanttu/my-org.git ~/Projects/backup/notes
+Note: The --auto-clone flag will clone BOTH repositories:
+  1. Environment backup: git@github.com:thebanttu/bantu-env.git
+  2. Notes backup: git@github.com:thebanttu/my-org.git
 
 Supported distributions:
   - Fedora 43 (dnf)
@@ -707,7 +723,10 @@ Supported distributions:
                        help='Automatically clone backup from git if not found locally')
     parser.add_argument('--repo-url',
                        default='git@github.com:thebanttu/bantu-env.git',
-                       help='Git repository URL for backup (default: git@github.com:thebanttu/bantu-env.git)')
+                       help='Git repository URL for environment backup (default: git@github.com:thebanttu/bantu-env.git)')
+    parser.add_argument('--notes-repo-url',
+                       default='git@github.com:thebanttu/my-org.git',
+                       help='Git repository URL for notes backup (default: git@github.com:thebanttu/my-org.git)')
 
     args = parser.parse_args()
 
@@ -722,7 +741,8 @@ Supported distributions:
             skip_packages=args.skip_packages,
             use_symlinks=args.symlinks,
             auto_clone=args.auto_clone,
-            repo_url=args.repo_url
+            repo_url=args.repo_url,
+            notes_repo_url=args.notes_repo_url
         )
 
         # Print summary
