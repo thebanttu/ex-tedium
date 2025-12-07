@@ -90,16 +90,21 @@ def run_command(cmd: List[str], description: str, check=True, shell=False) -> Tu
     """
     try:
         if shell and isinstance(cmd, str):
-            result = subprocess.run(cmd, shell=True, check=check,
+            result = subprocess.run(cmd, shell=True, check=False,
                                   capture_output=True, text=True)
         else:
-            result = subprocess.run(cmd, check=check,
+            result = subprocess.run(cmd, check=False,
                                   capture_output=True, text=True)
-        return (True, result.stdout)
-    except subprocess.CalledProcessError as e:
-        error_msg = f"Command failed: {e.stderr if e.stderr else e.stdout}"
-        stats.add_error(description, error_msg)
-        return (False, error_msg)
+
+        # Check the return code to determine success
+        if result.returncode == 0:
+            return (True, result.stdout)
+        else:
+            if check:
+                # Only add to errors if check=True
+                error_msg = f"Command failed: {result.stderr if result.stderr else result.stdout}"
+                stats.add_error(description, error_msg)
+            return (False, result.stderr if result.stderr else result.stdout)
     except Exception as e:
         stats.add_error(description, str(e))
         return (False, str(e))
@@ -150,11 +155,21 @@ def restore_directory(source: str, target: str, description: str,
     if backup_existing and target_path.exists():
         backup_path = str(target_path) + '.bak'
         try:
+            # Remove old backup if it exists
+            if os.path.exists(backup_path):
+                if os.path.islink(backup_path):
+                    os.unlink(backup_path)
+                elif os.path.isdir(backup_path):
+                    shutil.rmtree(backup_path)
+                else:
+                    os.remove(backup_path)
+
+            # Now backup the current target
             if target_path.is_symlink():
                 os.unlink(target_path)
             else:
                 shutil.move(str(target_path), backup_path)
-            print(f"  (Backed up existing to {backup_path})")
+                print(f"  (Backed up existing to {backup_path})")
         except Exception as e:
             stats.add_error(description, f"Failed to backup existing: {e}")
             return False
@@ -202,8 +217,12 @@ def restore_files(source_dir: str, target_dir: str, files: List[str],
 
         # Backup existing
         if backup_existing and os.path.exists(target_file):
+            backup_file = target_file + '.bak'
             try:
-                shutil.move(target_file, target_file + '.bak')
+                # Remove old backup if it exists
+                if os.path.exists(backup_file):
+                    os.remove(backup_file)
+                shutil.move(target_file, backup_file)
             except Exception as e:
                 stats.add_error(f"{description}/{filename}",
                               f"Failed to backup: {e}")
