@@ -5,6 +5,8 @@ Test the git.py fixes for handling empty remote repositories
 import sys
 import os
 
+# Add script directory to path so priv_init can be imported
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + '/../lib')
 
 import priv_init

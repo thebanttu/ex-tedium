@@ -1,9 +1,13 @@
 #!/usr/bin/python3
 
+# Add script's directory to Python path so priv_init can be imported
+import sys, os
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
 import priv_init
 import bantu.utils
 from bantu.utils import bantu_utils as bu
-from bantu.utils import os, re, subprocess, sys, time
+from bantu.utils import re, subprocess, time
 from os import access, R_OK, X_OK
 from os.path import isfile
 from pprint import pprint as pp
