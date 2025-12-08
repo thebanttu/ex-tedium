@@ -4,9 +4,13 @@ Enhanced backup script for WSL environment
 Backs up important configs, scripts, and selective project data elegantly
 """
 
+# Add script's directory to Python path so priv_init can be imported
+import sys, os
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
 import priv_init
 import bantu.utils
-import os, re, subprocess, sys, time, json
+import re, subprocess, time, json
 from pathlib import Path
 from datetime import datetime
 from typing import Dict, List, Optional, Tuple
