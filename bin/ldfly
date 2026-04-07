@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+
+${HOME}/bin/kdfly
+
+VDSK=${HOME}/.Vms/dfly640.qcow2
+IMG=${HOME}/isos/dfly-x86_64-6.4.0_REL.iso
+DSK_SIZE=16G
+NO_CPUS=2
+MEM=1.5
+NIC=tap1
+VM_NAME=dfly640
+UDS=${HOME}/.Vms/.qemu-${VM_NAME}-vnc
+# Create Virtual disk if it doesn't already exist
+[ -e ${VDSK} ] || { \
+    echo Creating virtual disk at \"${VDSK}\" .... && \
+    qemu-img create -f qcow2 ${VDSK} ${DSK_SIZE} && \
+    echo Virtual disk created.
+}
+qemu-system-x86_64 \
+    -accel nvmm \
+    -cpu max \
+    -smp cpus=${NO_CPUS} \
+    -m ${MEM}G \
+    -drive file=${VDSK},if=none,id=hd0 -device virtio-blk-pci,drive=hd0 \
+    -netdev tap,id=${NIC},ifname=${NIC},script=no -device virtio-net-pci,netdev=${NIC} \
+    -display vnc=unix:${UDS} -vga vmware \
+    -usb -device usb-mouse,bus=usb-bus.0 \
+    -cdrom $IMG \
+    -name ${VM_NAME} \
+    -daemonize
+
+
+ssh -fNn -L 4321:${UDS} bantu@localhost

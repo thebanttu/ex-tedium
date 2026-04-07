@@ -1,0 +1,22 @@
+#!/usr/bin/env python3
+
+import subprocess as sp
+import json
+import pprint
+import sys
+
+videofile = sys.argv[1]
+out = sp.run(['ffprobe','-of','json','-show_entries', 'format:stream', videofile],\
+             stdout=sp.PIPE, stderr=sp.PIPE, universal_newlines=True)
+#pprint.pprint(out.stdout)
+results = json.loads(out.stdout)
+# metadata_format = results['format']['tags']
+metadata_streams = [res['tags'] for res in results['streams']]
+metadata_codec_types = [res['codec_type'] for res in results['streams']]
+#pprint.pprint(metadata_format) # "main" metadata: Title & Description found here
+#pprint.pprint(metadata_streams) # per-stream metadata
+#pprint.pprint(metadata_codec_types) # per-stream codec types
+if 'subtitle' in metadata_codec_types:
+    print('File has subtitles')
+else:
+    print('No subtitles found in video file')

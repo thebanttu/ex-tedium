@@ -1,0 +1,13 @@
+#!/usr/bin/env python3
+
+import priv_init
+from bantu.utils import sys
+from bantu.utils import bantu_utils as bu
+import bantu.utils
+
+if __name__ == "__main__":
+    if sys.argv[0][-2:] == "pp":
+        bu.check_internet()
+    elif sys.argv[0][-2:] == "rn":
+        bu.restart_if()
+        bu.check_internet()

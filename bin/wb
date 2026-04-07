@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+case "${1}" in
+    goog)
+	shift
+	se google "${*}" >&/dev/null &
+	;;
+esac

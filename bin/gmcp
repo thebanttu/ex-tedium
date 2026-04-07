@@ -1,0 +1,4 @@
+#!/bin/bash
+
+CONFIG="/home/bantu/Projects/ai/genai-toolbox/tools.yaml" 
+/usr/local/bin/toolbox --tools-file $CONFIG --port 10035

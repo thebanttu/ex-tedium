@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+
+set -eo pipefail
+
+make_less_pattern(){
+    patt="${*}"
+    echo "inside make_less_pattern: ${*}"
+    patt=$(sed -e 's/ /.*/g' <<< ${patt})
+    echo "inside make_less_pattern: ${patt}"
+}
+
+sl(){
+    export LESS="-I+G"
+    echo "inside sl: ${*}"
+    FILE=$1
+    echo "inside sl: value of '\${#*}' -> ${#*}"
+    if [ `expr length "${#*[@]:2}"` -gt 0 ]; then
+	patt="$( make_less_pattern "${*}" )"
+	less_cmd='/usr/bin/less -p '$( tr -d \'\\\n\'"${patt}"'\'\\\n\' <<< ${FILE})
+    else
+	patt=
+	less_cmd='/usr/bin/less '"${FILE}"
+    fi
+    echo "inside sl: ${less_cmd}"
+    #eval "${less_cmd}"
+}
+
+sl ${1} "${@:2}"

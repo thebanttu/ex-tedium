@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+present=0
+for n in `jot 5 0`
+do
+    present=$(doas disklabel sd${n} >&/dev/null; echo $?)
+    [ $present -eq 4 ] && continue
+    doas mount /dev/sd${n}e /mnt/usb
+    break
+done
+
+[[ $present -ne 102 ]] && \
+    echo Could NOT find an attached drive. Please check. >&2

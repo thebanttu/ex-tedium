@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+DEST="$HOME/.torrents"
+mkdir -p "$DEST" 2>/dev/null
+
+# Firefox passes the downloaded file path as $1
+file="$1"
+
+mv "$file" "$DEST/"

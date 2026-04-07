@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+
+set -eo pipefail
+
+PLAYER=mpv
+SHUFFLE= LISTONLY=
+# Collect options
+while getopts "sl" option
+do
+    case ${option} in
+	s)
+	    SHUFFLE=1;;
+	l)
+	    LISTONLY=1;;
+    esac
+done
+shift $(($OPTIND - 1))
+
+RE_PREDICATES=
+while [ ${#} -gt 0 ]; do
+    arg=$(echo "${1}" | sed 's/ /.*/g' | sed 's/.*/.*&.*/')
+    RE_PREDICATES="${RE_PREDICATES} -o -iregex '${arg}'"
+    shift
+done
+if [ -n "${RE_PREDICATES}" ]; then
+    RE_PREDICATES=$(echo "${RE_PREDICATES}" | sed 's/....//' | sed 's/.*/\\( & \\)/')
+fi
+SEARCH_DIRECTORIES="${HOME}/Videos ${HOME}/Downloads ${HOME}/Music/Videos"
+FIND_CMD="find -E ${SEARCH_DIRECTORIES} -depth -type f ${RE_PREDICATES}"
+SORT_FILTER="sort"
+SHUFFLE_FILTER="shuffle -f-"
+# Mimic find's -print0 with tr
+NULL_FILTER="tr '\n' '\0'"
+XARGS_PLAYER="xargs -0 ${PLAYER}"
+CMD="${FIND_CMD}"
+
+if [[ ${SHUFFLE} == "1" ]]
+then
+    CMD="${CMD} | ${SHUFFLE_FILTER}"
+else
+    CMD="${CMD} | ${SORT_FILTER}"
+fi
+
+if [[ ${LISTONLY} == "1" ]]
+then
+    CMD="${CMD} | cat -n"
+else
+    CMD="${CMD} | ${NULL_FILTER} | ${XARGS_PLAYER}"
+fi
+
+# echo "${CMD}"
+eval "${CMD}"

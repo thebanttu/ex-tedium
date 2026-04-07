@@ -1,0 +1,12 @@
+#!/usr/bin/env python3
+
+import priv_init
+import bantu.utils
+from bantu.utils import bantu_utils as bu
+import sys
+
+if __name__ == "__main__":
+    bu.internet()
+    pkg = sys.argv[1]
+    if not bu.is_installed(pkg):
+        bu.install(pkg)

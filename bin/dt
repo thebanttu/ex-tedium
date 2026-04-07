@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+# Download Torrent
+
+url=${1}
+torrent_dir=${HOME}/.torrents
+
+mkdir -p ${torrent_dir} 2>/dev/null
+
+curl --remote-name --output-dir "${torrent_dir}" --location "${url}"
+# https://torrage.info/torrent.php?h=AF208CA2982F69AD9474C9F61BFFB1BFA81B1D4A

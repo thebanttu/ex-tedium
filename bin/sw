@@ -1,0 +1,22 @@
+#!/bin/bash
+
+# Set the session name
+SESSION_NAME="prs"
+WORK_DIR="$HOME/Projects/prs"
+
+cd $WORK_DIR
+
+# Start a new detached tmux session with the first window named "cmd"
+tmux new-session -d -s $SESSION_NAME -n editor
+
+# Create the other windows
+tmux new-window -t $SESSION_NAME -n 'claude'
+
+# Start claude in the fourth window
+tmux send-keys -t $SESSION_NAME:claude 'claude' C-m
+
+# Select the first window as the default
+tmux select-window -t $SESSION_NAME:2
+
+# Attach to the newly created session
+tmux attach-session -t $SESSION_NAME

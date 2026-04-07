@@ -1,0 +1,7 @@
+#!/bin/bash
+
+PROJECT_DIR="/home/bantu/docker-rtorrent-rutorrent/examples/compose"
+
+cd ${PROJECT_DIR}
+docker compose down
+

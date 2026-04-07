@@ -1,0 +1,173 @@
+#!/usr/bin/env python3
+"""
+Bantu Imdb dispatcher
+"""
+
+import priv_init
+import sys, os, re
+from bantu.imdb import bantu_imdb as bi
+from bantu.imdb import BantuImdbError
+from pprint import pprint as pp
+
+class BantuImdbController:
+    def __init__(self):
+        self.i = bi()
+
+    def imdb_exec(self, a, t, arg=None, info=None):
+        if arg is not None:
+            if info is not None:
+                r = self.i.imdb_do(a, t, arg, info)
+            else:
+                r = self.i.imdb_do(a, t, arg)
+        else:
+            try:
+                r = self.i.imdb_do(a, t)
+            except BantuImdbError as be:
+                print(be)
+                sys.exit(3)
+        return r
+
+    def get_person_id(self, p):
+        people = self.imdb_exec('search', 'person', p)
+        return str(people[0].getID())
+
+    def get_people(self, m):
+        people = self.imdb_exec('search', 'person', m)
+        return people
+
+    def get_movies(self, m):
+        movies = self.imdb_exec('search', 'movie', m)
+        return movies
+
+    def get_movie_id(self, m):
+        movies = self.imdb_exec('search', 'movie', m)
+        return str(movies[0].getID())
+
+    def synopsis(self, m):
+        result = dict()
+        id = self.get_movie_id(m)
+        info=['plot', 'synopsis']
+        ir = self.imdb_exec('get', 'movie', arg=id, info=info)
+        result = {
+            'title'    : ir['title'],
+            'synopsis' : ir['plot outline'],
+            'year'     : ir['year'],
+        }
+        return result
+
+    def movie_info(self, m):
+        result = dict()
+        id = self.get_movie_id(m)
+        info=['main', 'plot', 'synopsis']
+        ir = self.imdb_exec('get', 'movie', arg=id, info=info)
+        #pp(ir.keys())
+        k = ir['kind']
+        if k == 'tv series':
+            r = self.tv_result(ir)
+        else:
+            r = self.movie_result(ir)
+        return (k, r)
+
+    def movie_result(self, r):
+        result = {
+            'kind'     : r['kind'],
+            'title'    : r['title'],
+            'synopsis' : r['plot'],
+            'year'     : r['year'],
+            'cast'     : ", ".join([c['name'] for c in r['cast']]),
+            'producer' : ", ".join([p['name'] for p in r['producer']]),
+            'genres'   : " / ".join(r['genres']),
+        }
+        ad = ''
+        for d in r['director']:
+            ad += d['name'] + ', '
+        ad = re.sub(r'..$', '', ad)
+        result['director'] = ad
+        if 'runtimes' in r.keys():
+            result['runtime'] = r['runtimes'][0]
+        else:
+            result['runtime'] = '-'
+        if type(result['synopsis']) is list:
+            result['synopsis'] = ' '.join(r['plot'])
+        return result
+
+    def tv_result(self, r):
+        result = {
+            'kind'     : r['kind'],
+            'title'    : r['title'],
+            'synopsis' : r['plot'],
+            'year'     : r['year'],
+            'cast'     : ", ".join([c['name'] for c in r['cast']]),
+            'genres'   : " / ".join(r['genres']),
+        }
+        if 'runtimes' in r.keys():
+            result['runtime'] = r['runtimes'][0]
+        else:
+            result['runtime'] = '-'
+        if type(result['synopsis']) is list:
+            result['synopsis'] = ' '.join(r['plot'])
+        return result
+
+    def list_people(self, p):
+        #r = r'.*' + p + r'.*'
+        people = self.imdb_exec('search', 'person', p)
+        #pp(people)
+        for p in people:
+            print(p['name'])
+
+    def movies_by_director(self, d):
+        id = self.get_person_id(d)
+        info=['main', 'filmography', 'biography']
+        items = self.imdb_exec('get', 'person_filmography', arg=id)
+        movies = items['titlesRefs']
+        for m in movies.keys():
+            if re.match(r'.*\(\d{4}\).*', m):
+                print(m)
+                #print(movies[m]['title'])
+            else:
+                next
+        #pp(ir)
+
+    def display_synopsis(self, m):
+        r = self.synopsis(m)
+        s = "{title} ({year})\n\n{synopsis}\n"
+        print(s.format(**r))
+
+    def display_tv_info(self, r):
+        s = "{title} ({year})\n\n" + \
+            "Kind: {kind}\n\n" + \
+            "Synopsis:\n{synopsis}\n\n" + \
+            "Runtime: {runtime} mins.\n\n" + \
+            "Genres: {genres}\n\n" + \
+            "Cast: {cast}\n\n"
+        print(s.format(**r))
+
+    def display_movie_info(self, r):
+        s = "{title} ({year})\n\n" + \
+            "Kind: {kind}\n\n" + \
+            "Synopsis:\n{synopsis}\n\n" + \
+            "Runtime: {runtime} mins.\n\n" + \
+            "Genres: {genres}\n\n" + \
+            "Director(s): {director}\n\n" + \
+            "Cast: {cast}\n\n" + \
+            "Producer(s): {producer}\n"
+        print(s.format(**r))
+
+    def display(self, m):
+       t, r = self.movie_info(m)
+       if t == 'tv series':
+           self.display_tv_info(r)
+       else:
+           self.display_movie_info(r)
+
+if __name__ == "__main__":
+    assert len(sys.argv) > 2
+    b = BantuImdbController()
+    if sys.argv[1] == "synopsis":
+        b.display_synopsis(" ".join(sys.argv[2]))
+    elif sys.argv[1] == "info":
+        b.display(" ".join(sys.argv[2:]))
+    elif sys.argv[1] == "person":
+        b.list_people(" ".join(sys.argv[2:]))
+    elif sys.argv[1] == "director":
+        b.movies_by_director(" ".join(sys.argv[2:]))

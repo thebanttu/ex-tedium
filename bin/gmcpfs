@@ -1,0 +1,9 @@
+#!/bin/bash
+
+
+docker run -d \
+  --name mcp-fileserver \
+  -p 7780:8080 \
+  -e ROOT_DIR=/workspace \
+  -v ~/ClaudeWorkspace:/workspace \
+  ghcr.io/modelcontextprotocol/fileserver:latest

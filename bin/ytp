@@ -1,0 +1,22 @@
+#!/usr/bin/env python3
+"""
+Bantu's Youtube searcher
+...and player
+"""
+
+import priv_init
+import sys, os
+from bantu.youtube import bantu_yt_search as bys
+
+if len(sys.argv) > 1:
+    query = " ".join(sys.argv[1:])
+else:
+    print("Please provide a search query to operate on.")
+    sys.exit(3)
+
+if sys.argv[0].endswith('ytp'):
+    bys.play_video(query)
+elif sys.argv[0].endswith('ytd'):
+    bys.download_video(query)
+else:
+    bys.search_dwim(query)

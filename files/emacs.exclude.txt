@@ -1,0 +1,13 @@
+.emacs.desktop*
+auto-save-list
+bookmarks
+eln-cache
+elpa
+eshell
+history
+my-packages/emacs-hcl-mode
+network-security.data
+projects
+tramp
+transient
+url
